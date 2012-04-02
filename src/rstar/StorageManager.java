@@ -23,4 +23,13 @@ public class StorageManager implements Serializable {
     public String getFileName(IRStarNode node) {
         return fileMap.get(node);
     }
+
+    public void saveNode(IRStarNode node) {
+        //TODO serialize node and save to file
+    }
+
+    public IRStarNode loadNode(IRStarNode node) {
+        //TODO load the file from disk and return unSerialized object
+        return null;
+    }
 }

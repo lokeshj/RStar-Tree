@@ -1,4 +1,7 @@
 //import rstree.RSTree;
+import rstar.RStarTree;
+import rstar.SpatialPoint;
+import util.Constants;
 import util.Trace;
 
 import java.io.*;
@@ -10,7 +13,7 @@ import static util.Utils.getMedian;
 
 public class Q1 {
 
-//	private static RSTree tree;
+	private static RStarTree tree;
     private int dim;
 	protected String inputFile;
     protected String pageFile;
@@ -28,7 +31,7 @@ public class Q1 {
 		controller.processInput();
 		System.out.println("Finished Processing file ...");
 
-		/*controller.writeRuntimeToFile(controller.insertRunTime,
+		controller.writeRuntimeToFile(controller.insertRunTime,
                 tree.getClass().getSimpleName() + "_Insertion_runtime.txt");
 		controller.writeRuntimeToFile(controller.searchRunTime,
                 tree.getClass().getSimpleName() + "_Search_runtime.txt");
@@ -37,7 +40,7 @@ public class Q1 {
 		controller.writeRuntimeToFile(controller.knnRuntime,
                 tree.getClass().getSimpleName() + "_KNNSearch_runtime.txt");
 
-		controller.printResults();*/
+		controller.printResults();
 	}
 
 	public Q1(String[] args) {
@@ -50,13 +53,11 @@ public class Q1 {
 			else
 				this.resultFile = this.getClass().getSimpleName()+ "_Results.txt";
 
-//            this.pageFile = tree.getClass().getSimpleName()+ "_pageFile.dat";
-
 		} else {
 			this.printUsage();
 			System.exit(1);
 		}
-//		tree = new RSTree(pageFile,dim);
+		tree = new RStarTree(Constants.TREE_FILE, dim, Constants.PAGESIZE);
 		this.insertRunTime = new ArrayList<Long>();
 		this.searchRunTime = new ArrayList<Long>();
 		this.rangeRuntime = new ArrayList<Long>();
@@ -95,7 +96,7 @@ public class Q1 {
                         point = extractPoint(lineSplit, 2);
 
                         start = System.currentTimeMillis();
-//						tree.insert(oid, point);
+						tree.insert(new SpatialPoint(point, oid));
                         end = System.currentTimeMillis();
 
                         this.updateTimeTaken(opType, (end - start));
@@ -120,9 +121,10 @@ public class Q1 {
                         point = extractPoint(lineSplit, 1);
 
                         start = System.currentTimeMillis();
-//						tree.search(point);
+                        oid = tree.pointSearch(new SpatialPoint(point));
                         end = System.currentTimeMillis();
 
+                        logger.trace("search result: " + oid);
                         this.updateTimeTaken(opType, (end - start));
                     } catch (Exception e) {
                         logger.traceError("Error while parsing line " + lineNum + ". Skipped Point search");
@@ -144,7 +146,7 @@ public class Q1 {
                         range = Double.parseDouble(lineSplit[this.dim + 1]);
 
                         start = System.currentTimeMillis();
-//						tree.rangeSearch(point, range);
+                        tree.rangeSearch(new SpatialPoint(point), range);
                         end = System.currentTimeMillis();
 
                         this.updateTimeTaken(opType, (end - start));
@@ -168,7 +170,7 @@ public class Q1 {
                         k = Float.parseFloat(lineSplit[this.dim + 1]);
 
                         start = System.currentTimeMillis();
-//						tree.kNNSearch(point, k);
+                        tree.knnSearch(new SpatialPoint(point), (int)k);
                         end = System.currentTimeMillis();
 
                         this.updateTimeTaken(opType, (end - start));
@@ -263,8 +265,6 @@ public class Q1 {
 		Collections.sort(runtime);
 		try {
 			int size = runtime.size();
-//			Long max = runtime.get(size-1);
-//			Long min = runtime.get(0);
 			Long percent5th = runtime.get((int)(0.05*size));
 			Long percent95th = runtime.get((int)(0.95*size));
 			float median = getMedian(runtime);
@@ -274,9 +274,7 @@ public class Q1 {
             }
 			double avg = sum / (double)size;
 
-//			result.append("\nTotal ops = "+size);
-//			result.append("\nMin time: ").append(min);
-//			result.append("\nMax time: ").append(max);
+			result.append("\nTotal ops = "+size);
 			result.append("\nAvg time: ").append(avg);
 			result.append("\n5th percentile: ").append(percent5th);
 			result.append("\n95th percentile: ").append(percent95th);
@@ -308,7 +306,7 @@ public class Q1 {
 		} 
 		catch (IOException e) {
 			logger.traceError("IOException while writing results to " + resultFile);
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 	}
 
@@ -324,11 +322,13 @@ public class Q1 {
 			}
 			bf.close();
 		} catch (IOException e) {
-            e.printStackTrace();
+            logger.traceError("IOException while writing runtimes to file.");
+//            e.printStackTrace();
         }
 	}
 
 	protected void printUsage() {
-		System.err.println("Usage: "+ this.getClass().getSimpleName() +" <path to input file> <dimension of points> [output file].\noutput file is optional.\n");
+		System.err.println("Usage: "+ this.getClass().getSimpleName() +
+                " <path to input file> <dimension of points> [output file].\noutput file is optional.\n");
 	}
 }

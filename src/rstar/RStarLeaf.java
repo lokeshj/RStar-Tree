@@ -3,18 +3,15 @@ package rstar;
 import java.util.ArrayList;
 
 /**
- * Created with IntelliJ IDEA.
  * User: Lokesh
  * Date: 3/4/12
  * Time: 2:22 AM
  */
-public class RStarLeaf implements IRStarNode {
-    private int _dimension;
-    private MBR mbr;
-    private int CAPACITY;
-    private ArrayList<SpatialPoint> children;
+public class RStarLeaf extends RStarNode implements IRStarNode {
+    private transient ArrayList<SpatialPoint> children;
 
     public RStarLeaf(int dimension) {
+        createId();
         _dimension = dimension;
         children = new ArrayList<SpatialPoint>(CAPACITY);
         mbr = new MBR(dimension);
@@ -45,8 +42,14 @@ public class RStarLeaf implements IRStarNode {
     }
 
     @Override
+    public long getNodeId() {
+        createId();
+        return nodeId;
+    }
+
+    @Override
     public ArrayList<SpatialPoint> getOverlappingChildren(MBR searchRegion) {
-        MBR intersection = this.mbr.getIntersection(searchRegion);
+        MBR intersection = mbr.getIntersection(searchRegion);
         return pointsInRegion(intersection);
     }
 

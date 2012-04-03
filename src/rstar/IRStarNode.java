@@ -9,4 +9,5 @@ public interface IRStarNode extends Serializable {
     public <T> int insert(T newChild);
     public MBR getMBR();
     public <T> ArrayList<T> getOverlappingChildren(MBR searchRegion);
+    public long getNodeId();
 }

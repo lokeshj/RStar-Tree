@@ -7,11 +7,8 @@ import java.util.ArrayList;
  * Date: 3/4/12
  * Time: 2:55 AM
  */
-public class RStarInternal implements IRStarNode {
-    private int _dimension;
-    private MBR mbr;
-    private int CAPACITY;
-    private ArrayList<IRStarNode> children;
+public class RStarInternal extends RStarNode implements IRStarNode {
+    private transient ArrayList<IRStarNode> children;
 
     public RStarInternal(int dimension) {
         _dimension = dimension;
@@ -48,5 +45,18 @@ public class RStarInternal implements IRStarNode {
     public ArrayList<IRStarNode> getOverlappingChildren(MBR searchRegion) {
         //TODO
         return children;
+    }
+
+    @Override
+    public long getNodeId() {
+        createId();
+        return nodeId;
+    }
+
+    public long changeInVolume(SpatialPoint newPoint) {
+        SpatialPoint[] pt = new SpatialPoint[1];
+        pt[0] = newPoint;
+        MBR pointmbr = new MBR(_dimension, pt);
+        return mbr.deltaV_onInclusion(pointmbr);
     }
 }

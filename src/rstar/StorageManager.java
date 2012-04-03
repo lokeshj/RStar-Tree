@@ -1,35 +1,64 @@
 package rstar;
 
-import java.io.Serializable;
-import java.util.HashMap;
+import rstar.dto.TreeFile;
+import util.Constants;
+
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 
 /**
  * User: Lokesh
  * Date: 3/4/12
  * Time: 1:33 AM
  */
-public class StorageManager implements Serializable {
-    HashMap<IRStarNode, String> fileMap;
+public class StorageManager  {
+    RandomAccessFile curFile;
+    FileChannel channel;
 
     public StorageManager() {
         //TODO
-        fileMap = new HashMap<IRStarNode, String>();
     }
 
-    public void addNode(IRStarNode node) {
-        fileMap.put(node, ""+node.hashCode());
-    }
-
-    public String getFileName(IRStarNode node) {
-        return fileMap.get(node);
-    }
-
-    public void saveNode(IRStarNode node) {
+    public void save(IRStarNode node) {
         //TODO serialize node and save to file
     }
 
-    public IRStarNode loadNode(IRStarNode node) {
-        //TODO load the file from disk and return unSerialized object
+    public IRStarNode load(long nodeId) {
+        return nodeFromDisk(fileFromNodeId(nodeId));
+    }
+
+    public String fileFromNodeId(long nodeId) {
+        String file = Constants.FILE_PREFIX + nodeId + Constants.FILE_SUFFIX;
+        return file;
+    }
+
+    private IRStarNode nodeFromDisk(String filename) {
+        IRStarNode node = null;
+        //TODO read file and unserialize object, tc of exceptions
+        return null;
+    }
+
+    public int saveTree(TreeFile tree, File saveFile) {
+        //TODO save tree object in saveFile
+        int status = -1;
+        try {
+            FileOutputStream fos = new FileOutputStream(saveFile);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+
+            oos.writeObject(tree);
+            oos.flush();
+            oos.close();
+            status = 1;             // successful save
+        } catch (IOException e) {
+            System.err.println("Error while saving Tree to " + saveFile.toURI());
+        }
+
+        return status;
+    }
+
+    public TreeFile loadTree(File saveFile){
+        //TODO deserialize savefile and return retrieved TreeFile object
         return null;
     }
 }

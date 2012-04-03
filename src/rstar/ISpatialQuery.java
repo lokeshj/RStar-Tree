@@ -1,17 +1,14 @@
 package rstar;
 
-import java.io.Serializable;
-
 /**
- * Created with IntelliJ IDEA.
  * User: Lokesh
  * Date: 3/4/12
  * Time: 4:57 AM
  */
-public interface IRStarQuery extends Serializable {
+public interface ISpatialQuery {
     /**
      * inserts a point in the tree
-     * @param point
+     * @param point the point to be inserted
      * @return 1 if successfull, -1 otherwise
      */
     int insert(SpatialPoint point);

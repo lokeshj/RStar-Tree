@@ -1,6 +1,7 @@
 package rstar;
 
 import rstar.dto.TreeDTO;
+import rstar.interfaces.IDtoConvertible;
 import rstar.interfaces.IRStarNode;
 import rstar.interfaces.ISpatialQuery;
 import rstar.spatial.SpatialPoint;
@@ -14,7 +15,7 @@ import java.io.FileNotFoundException;
  * Date: 3/4/12
  * Time: 1:29 AM
  */
-public class RStarTree implements ISpatialQuery {
+public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
     public RStarTree() {
         dimension = Constants.DIMENSION;
@@ -133,4 +134,9 @@ public class RStarTree implements ISpatialQuery {
     private IRStarNode root;
     private long rootPointer = -1;
 
+    @Override
+    public TreeDTO toDTO() {
+        //TODO
+        return null;
+    }
 }

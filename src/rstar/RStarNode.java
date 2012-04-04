@@ -1,8 +1,10 @@
 package rstar;
 
+import rstar.dto.NodeDTO;
+import rstar.interfaces.IDtoConvertible;
 import rstar.spatial.HyperRectangle;
 
-public class RStarNode {
+public class RStarNode implements IDtoConvertible{
     protected long nodeId = -1;
     protected static int _dimension;
     protected static int CAPACITY;
@@ -17,4 +19,8 @@ public class RStarNode {
             nodeId = this.hashCode();       //create nodeId only once.
     }
 
+    @Override
+    public NodeDTO toDTO() {
+        return null;
+    }
 }

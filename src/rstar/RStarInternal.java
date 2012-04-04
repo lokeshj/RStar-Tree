@@ -1,5 +1,6 @@
 package rstar;
 
+import rstar.dto.NodeDTO;
 import rstar.interfaces.IRStarNode;
 import rstar.spatial.HyperRectangle;
 import rstar.spatial.SpatialPoint;
@@ -62,5 +63,11 @@ public class RStarInternal extends RStarNode implements IRStarNode {
         pt[0] = newPoint;
         HyperRectangle pointmbr = new HyperRectangle(_dimension, pt);
         return mbr.deltaV_onInclusion(pointmbr);
+    }
+
+    @Override
+    public NodeDTO toDTO() {
+        //TODO
+        return super.toDTO();
     }
 }

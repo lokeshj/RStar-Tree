@@ -1,11 +1,14 @@
 package rstar.spatial;
 
+import rstar.dto.MbrDTO;
+import rstar.interfaces.IDtoConvertible;
+
 /**
  * User: Lokesh
  * Date: 3/4/12
  * Time: 1:52 AM
  */
-public class HyperRectangle {
+public class HyperRectangle implements IDtoConvertible {
     private int _dimension;
     private SpatialPoint[] points;
 
@@ -36,5 +39,11 @@ public class HyperRectangle {
     public long deltaV_onInclusion(HyperRectangle newmbr) {
         //TODO
         return 0;
+    }
+
+    @Override
+    public MbrDTO toDTO() {
+        //TODO
+        return null;
     }
 }

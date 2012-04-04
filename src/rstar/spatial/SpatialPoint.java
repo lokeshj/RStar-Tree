@@ -1,13 +1,14 @@
 package rstar.spatial;
 
-import java.io.Serializable;
+import rstar.dto.PointDTO;
+import rstar.interfaces.IDtoConvertible;
 
 /**
  * User: Lokesh
  * Date: 3/4/12
  * Time: 2:05 AM
  */
-public class SpatialPoint implements Serializable {
+public class SpatialPoint implements IDtoConvertible {
     private int _dimension;
     private double[] _cords;
     private float  _oid;
@@ -60,5 +61,11 @@ public class SpatialPoint implements Serializable {
         }
         str.append("]");
         return str.toString();
+    }
+
+    @Override
+    public PointDTO toDTO() {
+        //TODO
+        return null;
     }
 }

@@ -1,5 +1,6 @@
 package rstar;
 
+import rstar.dto.NodeDTO;
 import rstar.interfaces.IRStarNode;
 import rstar.spatial.HyperRectangle;
 import rstar.spatial.SpatialPoint;
@@ -60,5 +61,11 @@ public class RStarLeaf extends RStarNode implements IRStarNode {
     private ArrayList<SpatialPoint> pointsInRegion(HyperRectangle region) {
         //TODO
         return children;
+    }
+
+    @Override
+    public NodeDTO toDTO() {
+        //TODO
+        return super.toDTO();
     }
 }

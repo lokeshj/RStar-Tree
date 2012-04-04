@@ -6,4 +6,9 @@ package rstar.dto;
  * Time: 9:04 PM
  */
 public class MbrDTO {
+    public PointDTO[] points;
+
+    public MbrDTO(PointDTO[] points) {
+        this.points = points;
+    }
 }

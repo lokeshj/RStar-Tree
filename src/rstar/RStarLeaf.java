@@ -1,5 +1,9 @@
 package rstar;
 
+import rstar.interfaces.IRStarNode;
+import rstar.spatial.HyperRectangle;
+import rstar.spatial.SpatialPoint;
+
 import java.util.ArrayList;
 
 /**
@@ -14,7 +18,7 @@ public class RStarLeaf extends RStarNode implements IRStarNode {
         createId();
         _dimension = dimension;
         children = new ArrayList<SpatialPoint>(CAPACITY);
-        mbr = new MBR(dimension);
+        mbr = new HyperRectangle(dimension);
     }
 
     @Override
@@ -37,7 +41,7 @@ public class RStarLeaf extends RStarNode implements IRStarNode {
     }
 
     @Override
-    public MBR getMBR() {
+    public HyperRectangle getMBR() {
         return mbr;
     }
 
@@ -48,12 +52,12 @@ public class RStarLeaf extends RStarNode implements IRStarNode {
     }
 
     @Override
-    public ArrayList<SpatialPoint> getOverlappingChildren(MBR searchRegion) {
-        MBR intersection = mbr.getIntersection(searchRegion);
+    public ArrayList<SpatialPoint> getOverlappingChildren(HyperRectangle searchRegion) {
+        HyperRectangle intersection = mbr.getIntersection(searchRegion);
         return pointsInRegion(intersection);
     }
 
-    private ArrayList<SpatialPoint> pointsInRegion(MBR region) {
+    private ArrayList<SpatialPoint> pointsInRegion(HyperRectangle region) {
         //TODO
         return children;
     }

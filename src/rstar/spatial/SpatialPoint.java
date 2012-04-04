@@ -1,4 +1,4 @@
-package rstar;
+package rstar.spatial;
 
 import java.io.Serializable;
 

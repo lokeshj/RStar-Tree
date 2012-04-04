@@ -1,10 +1,12 @@
 package rstar;
 
+import rstar.spatial.HyperRectangle;
+
 public class RStarNode {
     protected long nodeId = -1;
     protected static int _dimension;
     protected static int CAPACITY;
-    protected MBR mbr;
+    protected HyperRectangle mbr;
     protected long[] childPointers;   //ids of all children = filenames of children
 
     public RStarNode() {

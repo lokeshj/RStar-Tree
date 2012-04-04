@@ -1,10 +1,11 @@
 package rstar;
 
-import rstar.dto.TreeFile;
+import rstar.dto.TreeDTO;
+import rstar.interfaces.IDiskQuery;
+import rstar.interfaces.IRStarNode;
 import util.Constants;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
 /**
@@ -12,34 +13,44 @@ import java.nio.channels.FileChannel;
  * Date: 3/4/12
  * Time: 1:33 AM
  */
-public class StorageManager  {
+public class StorageManager implements IDiskQuery {
     RandomAccessFile curFile;
     FileChannel channel;
+
 
     public StorageManager() {
         //TODO
     }
 
+    @Override
     public void save(IRStarNode node) {
         //TODO serialize node and save to file
+        if (node.isLeaf()) {
+
+        } else {
+
+        }
     }
 
-    public IRStarNode load(long nodeId) {
-        return nodeFromDisk(fileFromNodeId(nodeId));
+    @Override
+    public IRStarNode load(long nodeId) throws FileNotFoundException {
+        return nodeFromDisk(constructFilename(nodeId));
     }
 
-    public String fileFromNodeId(long nodeId) {
-        String file = Constants.FILE_PREFIX + nodeId + Constants.FILE_SUFFIX;
-        return file;
-    }
-
-    private IRStarNode nodeFromDisk(String filename) {
+    private IRStarNode nodeFromDisk(String filename) throws FileNotFoundException {
         IRStarNode node = null;
+        getChannel(new File(filename));
         //TODO read file and unserialize object, tc of exceptions
         return null;
     }
 
-    public int saveTree(TreeFile tree, File saveFile) {
+    public String constructFilename(long nodeId) {
+        String file = Constants.FILE_PREFIX + nodeId + Constants.FILE_SUFFIX;
+        return file;
+    }
+
+    @Override
+    public int saveTree(TreeDTO tree, File saveFile) {
         //TODO save tree object in saveFile
         int status = -1;
         try {
@@ -57,8 +68,15 @@ public class StorageManager  {
         return status;
     }
 
-    public TreeFile loadTree(File saveFile){
+    @Override
+    public TreeDTO loadTree(File saveFile) throws FileNotFoundException {
         //TODO deserialize savefile and return retrieved TreeFile object
+        getChannel(saveFile);
         return null;
+    }
+
+    private void getChannel(File node) throws FileNotFoundException {
+        curFile = new RandomAccessFile(node, "rw");
+        channel = curFile.getChannel();
     }
 }

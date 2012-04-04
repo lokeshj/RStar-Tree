@@ -1,6 +1,6 @@
 //import rstree.RSTree;
 import rstar.RStarTree;
-import rstar.SpatialPoint;
+import rstar.spatial.SpatialPoint;
 import util.Constants;
 import util.Trace;
 

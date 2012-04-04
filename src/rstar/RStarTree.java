@@ -1,9 +1,13 @@
 package rstar;
 
-import rstar.dto.TreeFile;
+import rstar.dto.TreeDTO;
+import rstar.interfaces.IRStarNode;
+import rstar.interfaces.ISpatialQuery;
+import rstar.spatial.SpatialPoint;
 import util.Constants;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 /**
  * User: Lokesh
@@ -15,8 +19,8 @@ public class RStarTree implements ISpatialQuery {
     public RStarTree() {
         dimension = Constants.DIMENSION;
         pagesize = Constants.PAGESIZE;
-        storage = new StorageManager();
         saveFile = new File(Constants.TREE_FILE);
+        storage = new StorageManager();
         initStorage();
         setCapacities();
     }
@@ -24,13 +28,15 @@ public class RStarTree implements ISpatialQuery {
     public RStarTree(String saveFile, int dimension, int pagesize) {
         this.dimension = dimension;
         this.pagesize = pagesize;
-        this.storage = new StorageManager();
         this.saveFile = new File(saveFile);
+        this.storage = new StorageManager();
         initStorage();
         setCapacities();
     }
 
     public RStarTree(String saveFile) {
+        dimension = Constants.DIMENSION;
+        pagesize = Constants.PAGESIZE;
         this.saveFile = new File(saveFile);
         this.storage = new StorageManager();
         initStorage();
@@ -39,11 +45,15 @@ public class RStarTree implements ISpatialQuery {
 
     private void initStorage() {
         if (saveFile.exists() && saveFile.length() != 0) {
-            TreeFile treeData = storage.loadTree(saveFile);
-            if(treeData != null){
-                dimension = treeData.dimension;
-                pagesize = treeData.pagesize;
-                rootPointer = treeData.rootPointer;
+            try {
+                TreeDTO treeData = storage.loadTree(saveFile);
+                if (treeData != null) {             //update tree fields from saveFile
+                    dimension = treeData.dimension;
+                    pagesize = treeData.pagesize;
+                    rootPointer = treeData.rootPointer;
+                }
+            } catch (FileNotFoundException e) {
+                System.err.println("Failed to load R* Tree from "+saveFile.getName());
             }
         }
     }
@@ -52,6 +62,9 @@ public class RStarTree implements ISpatialQuery {
         //TODO calculate leaf and directory capacities and update Constants.
     }
 
+    /*
+        QUERY FUNCTIONS
+     */
     @Override
     public int insert(SpatialPoint point) {
         loadRoot();
@@ -81,11 +94,14 @@ public class RStarTree implements ISpatialQuery {
         return null;
     }
 
+    /*
+     ***** DISK RELATED FUNCTIONS ****
+     */
     private void loadRoot() {
         if (root == null) {
             //empty tree
-            root = storage.load(rootPointer);
-            if(root == null)            // still null -> empty tree
+            root = loadNode(rootPointer);
+            if (root == null)            // still null -> empty tree
             {
                 root = new RStarLeaf(dimension);
             }
@@ -94,11 +110,19 @@ public class RStarTree implements ISpatialQuery {
     }
 
     private IRStarNode loadNode(long nodeId) {
-        return storage.load(nodeId);
+        //check for valid nodeId
+        if (nodeId != -1) {
+            try {
+                return storage.load(nodeId);
+            } catch (FileNotFoundException e) {
+                System.err.println("Error while loading R* Tree node from file " + storage.constructFilename(nodeId));
+            }
+        }
+        return null;
     }
 
     public int saveTree() {
-        TreeFile save = new TreeFile(dimension, pagesize, rootPointer);
+        TreeDTO save = new TreeDTO(dimension, pagesize, rootPointer);
         return storage.saveTree(save, saveFile);
     }
 
@@ -107,6 +131,6 @@ public class RStarTree implements ISpatialQuery {
     private File saveFile;
     private StorageManager storage;
     private IRStarNode root;
-    private long rootPointer;
+    private long rootPointer = -1;
 
 }

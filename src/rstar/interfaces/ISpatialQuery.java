@@ -1,4 +1,6 @@
-package rstar;
+package rstar.interfaces;
+
+import rstar.spatial.SpatialPoint;
 
 /**
  * User: Lokesh

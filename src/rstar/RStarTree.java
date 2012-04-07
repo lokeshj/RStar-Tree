@@ -17,6 +17,13 @@ import java.io.FileNotFoundException;
  */
 public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
+    private int dimension;
+    private int pagesize;
+    private File saveFile;
+    private StorageManager storage;
+    private IRStarNode root;
+    private long rootPointer = -1;
+
     public RStarTree() {
         dimension = Constants.DIMENSION;
         pagesize = Constants.PAGESIZE;
@@ -58,6 +65,14 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
             } catch (FileNotFoundException e) {
                 System.err.println("Failed to load R* Tree from "+saveFile.getName());
             }
+
+            /*
+             *  check for the node-data directory. create one if doesn't exist
+             */
+            File dataDir = new File(saveFile.getParentFile(), Constants.TREE_DATA_DIRECTORY);
+            if (!dataDir.exists() || !dataDir.isDirectory()) {
+                dataDir.mkdir();
+            }
         }
     }
 
@@ -70,7 +85,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      */
 
     /**
-     * inserts a point in the tree and saves is on disk
+     * inserts a point in the tree and saves it on disk
      * @param point the point to be inserted
      * @return 1 if successful, else -1
      */
@@ -82,13 +97,25 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         return 1;
     }
 
+    /**
+     * searches for a spatial point in the tree and
+     * returns its oid if its found.
+     * @param point the point to be searched
+     * @return oid of the point if found, else -1.
+     */
     @Override
     public float pointSearch(SpatialPoint point) {
         //TODO
         System.out.println("searching point :"+point);
-        return 1;
+        return -1;
     }
 
+    /**
+     * searches for points in the given range of the center point
+     * @param center center point of the search region.
+     * @param range radius of the search region.
+     * @return array of all the points found in the range
+     */
     @Override
     public SpatialPoint[] rangeSearch(SpatialPoint center, double range) {
         //TODO
@@ -96,6 +123,12 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         return null;
     }
 
+    /**
+     * searches for the k nearest neighbours of a center point
+     * @param center SpatialPoint
+     * @param k number of nearest neighbours required
+     * @return array of the k nearest neighbours of center.
+     */
     @Override
     public SpatialPoint[] knnSearch(SpatialPoint center, int k) {
         //TODO
@@ -105,6 +138,12 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
     /*
      ***** DISK RELATED FUNCTIONS ****
+     */
+
+    /**
+     * loads root from disk if exists
+     * otherwise creates a new LeafNode and
+     * assigns it root.
      */
     private void loadRoot() {
         if (root == null) {
@@ -118,6 +157,12 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         }
     }
 
+    /**
+     * loads Nodes from disk using their nodeId
+     * @param nodeId the nodeId attribute of the Node
+     *               to be loaded
+     * @return the Node required, null uf it doesn't exist
+     */
     private IRStarNode loadNode(long nodeId) {
         //check for valid nodeId
         if (nodeId != -1) {
@@ -130,18 +175,21 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         return null;
     }
 
+    /**
+     * saves the tree details to disk
+     * @return 1 if successful, -1 otherwise
+     */
     public int saveTree() {
         TreeDTO save = new TreeDTO(dimension, pagesize, rootPointer);
         return storage.saveTree(save, saveFile);
     }
 
-    private int dimension;
-    private int pagesize;
-    private File saveFile;
-    private StorageManager storage;
-    private IRStarNode root;
-    private long rootPointer = -1;
-
+    /**
+     * converts this tree to its DTO representation
+     * which in turn can be saved to disk.
+     * @return TreeDTO object which is the DTO form of
+     * this tree
+     */
     @Override
     public TreeDTO toDTO() {
         //TODO

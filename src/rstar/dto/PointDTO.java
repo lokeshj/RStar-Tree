@@ -5,7 +5,7 @@ package rstar.dto;
  * Date: 4/4/12
  * Time: 9:05 PM
  */
-public class PointDTO {
+public class PointDTO extends AbstractDTO{
     public float oid;
     public double[] coords;
 

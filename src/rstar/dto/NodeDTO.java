@@ -5,7 +5,7 @@ package rstar.dto;
  * Date: 4/4/12
  * Time: 9:06 PM
  */
-public class NodeDTO {
+public class NodeDTO extends AbstractDTO {
     public long nodeId;
     public long[] children;
     public MbrDTO mbr;

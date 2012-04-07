@@ -2,7 +2,6 @@ package rstar.interfaces;
 
 import rstar.spatial.HyperRectangle;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 
 public interface IRStarNode extends IDtoConvertible{

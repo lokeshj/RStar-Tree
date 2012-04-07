@@ -1,13 +1,11 @@
 package rstar.dto;
 
-import java.io.Serializable;
-
 /**
  * User: Lokesh
  * Date: 4/4/12
  * Time: 4:29 AM
  */
-public class TreeDTO implements Serializable {
+public class TreeDTO extends AbstractDTO {
     public int dimension;
     public int pagesize;
     public long rootPointer;

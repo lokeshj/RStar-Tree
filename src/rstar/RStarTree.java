@@ -52,6 +52,8 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
                     dimension = treeData.dimension;
                     pagesize = treeData.pagesize;
                     rootPointer = treeData.rootPointer;
+                    System.out.printf("Tree loaded successfully from %s. dimension = %d and pagesize = %d%n",
+                            saveFile.getName(), dimension, pagesize);
                 }
             } catch (FileNotFoundException e) {
                 System.err.println("Failed to load R* Tree from "+saveFile.getName());
@@ -65,6 +67,12 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
     /*
         QUERY FUNCTIONS
+     */
+
+    /**
+     * inserts a point in the tree and saves is on disk
+     * @param point the point to be inserted
+     * @return 1 if successful, else -1
      */
     @Override
     public int insert(SpatialPoint point) {

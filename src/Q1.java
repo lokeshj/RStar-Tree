@@ -1,4 +1,3 @@
-//import rstree.RSTree;
 import rstar.RStarTree;
 import rstar.spatial.SpatialPoint;
 import util.Constants;
@@ -187,7 +186,9 @@ public class Q1 {
 				default:
 					logger.traceError("Invalid query type " + opType + " at line " + lineNum + ". Skipped .. ");
 					break;
-				}				
+				}
+                if (lineNum == 100)
+                    break;
 			}
 			input.close();
 		}

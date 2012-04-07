@@ -10,30 +10,95 @@ import rstar.interfaces.IDtoConvertible;
  */
 public class HyperRectangle implements IDtoConvertible {
     private int _dimension;
-    private SpatialPoint[] points;
+    /**
+     * points is a 2D double array containing
+     * the max and min values for each dimension
+     * in the rectangle.
+     */
+    private double[][] points;
+    private static int MAX_CORD = 0;
+    private static int MIN_CORD = 1;
+
+    public double[][] getPoints() {
+        return points;
+    }
+
+    public void setPoints(double[][] points) {
+        this.points = points;
+    }
 
     public HyperRectangle(int dimension) {
         this._dimension = dimension;
-        points = new SpatialPoint[(int)Math.pow(2, _dimension)];
+        points = new double[dimension][2];
     }
 
-    public HyperRectangle(int dimension, SpatialPoint[] coords) {
+    public HyperRectangle(int dimension, SpatialPoint[] cords) {
         this._dimension = dimension;
-        points = new SpatialPoint[(int)Math.pow(2, _dimension)];
-        System.arraycopy(coords, 0, points, 0, coords.length);
+        points = new double[dimension][2];
+
+        update(cords);
+    }
+
+    private void update(SpatialPoint[] newPoints) {
+        for (int j = 0; j < newPoints.length; j++) {
+            double[] cord = newPoints[j].getCords();
+            assert cord.length == _dimension;
+            for (int i = 0; i < cord.length; i++) {
+                if (points[i][MAX_CORD] < cord[i]) {
+                    points[i][MAX_CORD] = cord[i];
+                }
+                if (points[i][MIN_CORD] > cord[i]) {
+                    points[i][MIN_CORD] = cord[i];
+                }
+            }
+        }
     }
 
     public void update(SpatialPoint newPoint) {
-        //TODO
+        SpatialPoint[] newPoints = new SpatialPoint[1];
+        newPoints[0] = newPoint;
+        update(newPoints);
     }
 
     public void update(HyperRectangle addedRegion) {
-        //TODO
+        double[][] newPoints = addedRegion.getPoints();
+        assert newPoints.length == _dimension;
+        for (int j = 0; j < _dimension; j++) {
+            if (points[j][MAX_CORD] < newPoints[j][MAX_CORD]) {
+                points[j][MAX_CORD] = newPoints[j][MAX_CORD];
+            }
+            if (points[j][MIN_CORD] > newPoints[j][MIN_CORD]) {
+                points[j][MIN_CORD] = newPoints[j][MIN_CORD];
+            }
+        }
     }
 
+    /**
+     * finds the intersecting region of this MBR with otherMBR
+     * @param otherMBR
+     * @return the intersecting region, null if not intersecting
+     */
     public HyperRectangle getIntersection(HyperRectangle otherMBR) {
-        //TODO
-        return this;
+        double[][] interPoints = new double[_dimension][2];
+        double[][] newPoints = otherMBR.getPoints();
+        assert newPoints.length == _dimension;
+
+        boolean intersectExists = true;
+        for (int i = 0; i < _dimension; i++) {
+            if ((points[i][MAX_CORD] <= newPoints[i][MIN_CORD]) || (points[i][MIN_CORD] >= newPoints[i][MAX_CORD])) {
+                intersectExists = false;
+                break;
+            }
+            interPoints[i][MAX_CORD] = Math.min(newPoints[i][MAX_CORD], points[i][MAX_CORD]);
+            interPoints[i][MIN_CORD] = Math.max(newPoints[i][MIN_CORD], points[i][MAX_CORD]);
+        }
+
+        if (!intersectExists) {
+            return null;
+        }
+        HyperRectangle intersect = new HyperRectangle(_dimension);
+        intersect.setPoints(interPoints);
+        return intersect;
     }
 
     public long deltaV_onInclusion(HyperRectangle newmbr) {

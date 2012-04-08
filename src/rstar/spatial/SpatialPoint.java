@@ -59,6 +59,24 @@ public class SpatialPoint implements IDtoConvertible {
         this._oid = oid;
     }
 
+    /**
+     * calculate distance of this point with <pre>otherPoint</pre>
+     * @param otherPoint
+     * @return distance from <pre>otherPoint</pre>
+     */
+    public float distance(SpatialPoint otherPoint) {
+        float[] otherPoints = otherPoint.getCords();
+        float distance = 0;
+        for (int i = 0; i < _cords.length; i++) {
+            float tmp = (_cords[i] * _cords[i]) - (otherPoints[i] * otherPoints[i]);
+            if(tmp < 0)
+                tmp = -1 * tmp;
+
+            distance += tmp;
+        }
+        return (float)Math.pow(distance, 0.5);
+    }
+
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder("[ ");

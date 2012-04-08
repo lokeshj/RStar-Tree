@@ -11,6 +11,8 @@ import util.Constants;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -29,7 +31,6 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
     private float _pointSearchResult = -1;
     private ArrayList<SpatialPoint> _rangeSearchResult;
-    private ArrayList<SpatialPoint> _knnSearchResult;
 
     public RStarTree() {
         init(Constants.TREE_FILE, Constants.DIMENSION, Constants.PAGESIZE);
@@ -122,8 +123,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
     }
 
     private void _pointSearch(RStarNode start, SpatialPoint point) {
-        HyperRectangle searchRegion = new HyperRectangle(dimension);
-        searchRegion.update(point);
+        HyperRectangle searchRegion = new HyperRectangle(point.getCords());
         HyperRectangle intersection = start.getMBR().getIntersection(searchRegion);
 
         if(intersection != null) {
@@ -223,14 +223,40 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
     @Override
     public List<SpatialPoint> knnSearch(SpatialPoint center, int k) {
         System.out.println("knn search with k = "+k+" and point: "+center);
-        _knnSearchResult = new ArrayList<SpatialPoint>();
-        //TODO knnsearch
-        return _knnSearchResult;
+        loadRoot();
+        _knnSearch(root, center, k, 1);
+        return _rangeSearchResult;
     }
 
-    private void _knnSearch(RStarNode start, SpatialPoint point, int k) {
+    private void _knnSearch(RStarNode start, SpatialPoint center, int k, float range) {
+        _rangeSearchResult = new ArrayList<SpatialPoint>();
 
+        float[] points = center.getCords();
+        float[][] mbrPoints = new float[dimension][2];
+        for (int i = 0; i < dimension; i++) {
+            mbrPoints[i][0] = points[i] + (float) range;
+            mbrPoints[i][1] = points[i] - (float) range;
+        }
+        HyperRectangle searchRegion = new HyperRectangle(dimension);
+        searchRegion.setPoints(mbrPoints);
+
+        _rangeSearch(start, searchRegion);
+
+        if (_rangeSearchResult.size() < k) {
+            _knnSearch(start, center, k, 2 * range);
+        } else {
+            final SpatialPoint fcenter = center;
+            Comparator<? super SpatialPoint> paramComparator = new Comparator<SpatialPoint>() {
+                @Override
+                public int compare(SpatialPoint point1, SpatialPoint point2) {
+                    return (int) (fcenter.distance(point1) - fcenter.distance(point2));
+                }
+            };
+            Collections.sort(_rangeSearchResult, paramComparator);
+            _rangeSearchResult = (ArrayList<SpatialPoint>) _rangeSearchResult.subList(0, k);
+        }
     }
+
     /*
      ***** DISK RELATED FUNCTIONS ****
      */

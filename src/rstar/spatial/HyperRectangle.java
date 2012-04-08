@@ -45,6 +45,15 @@ public class HyperRectangle implements IDtoConvertible {
         this.points = dto.points;
     }
 
+    public HyperRectangle(float[] cords) {
+        this._dimension = cords.length;
+        points = new float[_dimension][2];
+        for (int i = 0; i < _dimension; i++) {
+            points[i][MAX_CORD] = cords[i];
+            points[i][MIN_CORD] = cords[i];
+        }
+    }
+
     private void update(SpatialPoint[] newPoints) {
         for (int j = 0; j < newPoints.length; j++) {
             float[] cord = newPoints[j].getCords();

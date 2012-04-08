@@ -33,6 +33,12 @@ public class SpatialPoint implements IDtoConvertible {
         this._oid = oid;
     }
 
+    public SpatialPoint(PointDTO dto) {
+        this._cords = dto.coords;
+        this._dimension = dto.coords.length;
+        this._oid = dto.oid;
+    }
+
     public int getDimension(){
         return _dimension;
     }

@@ -54,12 +54,6 @@ public class RStarInternal extends RStarNode {
         return mbr;
     }
 
-    /*@Override
-    public ArrayList<IRStarNode> getOverlappingChildren(HyperRectangle searchRegion) {
-        //TODO getOverlappingChildren
-        return children;
-    }*/
-
     public long changeInVolume(SpatialPoint newPoint) {
         HyperRectangle pointmbr = new HyperRectangle(_dimension);
         pointmbr.update(newPoint);

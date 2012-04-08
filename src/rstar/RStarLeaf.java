@@ -57,17 +57,6 @@ public class RStarLeaf extends RStarNode {
         return mbr;
     }
 
-   /* @Override
-    public ArrayList<SpatialPoint> getOverlappingChildren(HyperRectangle searchRegion) {
-        HyperRectangle intersection = mbr.getIntersection(searchRegion);
-        return pointsInRegion(intersection);
-    }
-
-    private ArrayList<SpatialPoint> pointsInRegion(HyperRectangle region) {
-        //TODO pointsInRegion
-        return loadedChildren;
-    }*/
-
     @Override
     public NodeDTO toDTO() {
         return new NodeDTO(childPointers, mbr.toDTO(), true);

@@ -115,6 +115,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
     @Override
     public float pointSearch(SpatialPoint point) {
         System.out.println("searching point :" + point);
+        _pointSearchResult = -1;
         loadRoot();
         _pointSearch(root, point);
         return _pointSearchResult;
@@ -124,7 +125,6 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         HyperRectangle searchRegion = new HyperRectangle(dimension);
         searchRegion.update(point);
         HyperRectangle intersection = start.getMBR().getIntersection(searchRegion);
-        _pointSearchResult = -1;
 
         if(intersection != null) {
             if (start.isLeaf()) {
@@ -170,7 +170,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      */
     @Override
     public List<SpatialPoint> rangeSearch(SpatialPoint center, double range) {
-        System.out.println("range search in range " + range + " of point: " + center);
+        System.out.println("searching in range " + range + " of point: " + center);
 
         float[] points = center.getCords();
         float[][] mbrPoints = new float[dimension][2];
@@ -178,7 +178,6 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
             mbrPoints[i][0] = points[i] + (float) range;
             mbrPoints[i][1] = points[i] - (float) range;
         }
-
         HyperRectangle searchRegion = new HyperRectangle(dimension);
         searchRegion.setPoints(mbrPoints);
 
@@ -189,7 +188,30 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
     }
 
     private void _rangeSearch(RStarNode start, HyperRectangle searchRegion) {
-        //TODO rangeSearch
+        HyperRectangle intersection = start.getMBR().getIntersection(searchRegion);
+        if (intersection != null) {
+            if (start.isLeaf()) {
+                for (Long pointer : root.childPointers) {
+                    PointDTO dto = storage.loadPoint(pointer);
+                    SpatialPoint spoint = new SpatialPoint(dto);
+                    HyperRectangle pointMbr = new HyperRectangle(dto.coords);
+
+                    if(pointMbr.getIntersection(searchRegion) != null)
+                        _rangeSearchResult.add(spoint);
+                }
+            }
+            else {
+                for (Long pointer : root.childPointers) {
+                    try {
+                        RStarNode childNode = storage.loadNode(pointer);    //recurse down
+                        _rangeSearch(childNode, searchRegion);
+
+                    } catch (FileNotFoundException e) {
+                        System.err.println("Exception while loading node from disk");
+                    }
+                }
+            }
+        }
     }
 
     /**

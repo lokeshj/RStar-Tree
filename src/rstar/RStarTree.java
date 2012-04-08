@@ -21,7 +21,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
     private int pagesize;
     private File saveFile;
     private StorageManager storage;
-    private IRStarNode root;
+    private RStarNode root;
     private long rootPointer = -1;
 
     public RStarTree() {
@@ -71,13 +71,19 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
              */
             File dataDir = new File(saveFile.getParentFile(), Constants.TREE_DATA_DIRECTORY);
             if (!dataDir.exists() || !dataDir.isDirectory()) {
-                dataDir.mkdir();
+                if (!dataDir.mkdir()) {
+                    System.err.println("Failed to create data directory of the tree. Exiting..");
+                    System.exit(1);
+                }
             }
         }
     }
 
     private void setCapacities(){
-        //TODO calculate leaf and directory capacities and update Constants.
+        Constants.DIMENSION = dimension;
+        //TODO add cost for mbr
+        Constants.MAX_CHILDREN = Constants.PAGESIZE/8;          // M = (pagesize - mbr_size)/ (size of Long = 8)
+        Constants.MIN_CHILDREN = Constants.MAX_CHILDREN/3;      // m = M/3
     }
 
     /*
@@ -163,7 +169,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      *               to be loaded
      * @return the Node required, null uf it doesn't exist
      */
-    private IRStarNode loadNode(long nodeId) {
+    private RStarNode loadNode(long nodeId) {
         //check for valid nodeId
         if (nodeId != -1) {
             try {

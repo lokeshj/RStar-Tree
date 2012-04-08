@@ -4,6 +4,7 @@ import rstar.dto.NodeDTO;
 import rstar.interfaces.IRStarNode;
 import rstar.spatial.HyperRectangle;
 import rstar.spatial.SpatialPoint;
+import util.Constants;
 
 import java.util.ArrayList;
 
@@ -12,13 +13,20 @@ import java.util.ArrayList;
  * Date: 3/4/12
  * Time: 2:55 AM
  */
-public class RStarInternal extends RStarNode implements IRStarNode {
+public class RStarInternal extends RStarNode {
     private transient ArrayList<IRStarNode> children;
 
     public RStarInternal(int dimension) {
         _dimension = dimension;
         children = new ArrayList<IRStarNode>(CAPACITY);
+        childPointers = new long[Constants.MAX_CHILDREN];
         mbr = new HyperRectangle(dimension);
+    }
+
+    public RStarInternal(NodeDTO dto, long nodeId) {
+        this.nodeId = nodeId;
+        this.childPointers = dto.children;
+        //TODO MBR
     }
 
     @Override
@@ -59,15 +67,13 @@ public class RStarInternal extends RStarNode implements IRStarNode {
     }
 
     public long changeInVolume(SpatialPoint newPoint) {
-        SpatialPoint[] pt = new SpatialPoint[1];
-        pt[0] = newPoint;
-        HyperRectangle pointmbr = new HyperRectangle(_dimension, pt);
+        HyperRectangle pointmbr = new HyperRectangle(_dimension);
+        pointmbr.update(newPoint);
         return mbr.deltaV_onInclusion(pointmbr);
     }
 
     @Override
     public NodeDTO toDTO() {
-        //TODO
-        return super.toDTO();
+        return new NodeDTO(childPointers, mbr.toDTO(), false);
     }
 }

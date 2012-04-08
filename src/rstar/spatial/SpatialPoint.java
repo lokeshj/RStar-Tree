@@ -10,7 +10,7 @@ import rstar.interfaces.IDtoConvertible;
  */
 public class SpatialPoint implements IDtoConvertible {
     private int _dimension;
-    private double[] _cords;
+    private float[] _cords;
     private float  _oid;
 
     public SpatialPoint() {
@@ -21,13 +21,13 @@ public class SpatialPoint implements IDtoConvertible {
         this._oid = -1;
     }
 
-    public SpatialPoint(double[] cords) {
+    public SpatialPoint(float[] cords) {
         this._cords = cords;
         this._dimension = cords.length;
         this._oid = -1;
     }
 
-    public SpatialPoint(double[] cords, float oid) {
+    public SpatialPoint(float[] cords, float oid) {
         this._cords = cords;
         this._dimension = cords.length;
         this._oid = oid;
@@ -37,11 +37,11 @@ public class SpatialPoint implements IDtoConvertible {
         return _dimension;
     }
 
-    public void setCords(double[] data){
+    public void setCords(float[] data){
         this._cords = data;
     }
 
-    public double[] getCords() {
+    public float[] getCords() {
         return _cords;
     }
 

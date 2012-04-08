@@ -68,8 +68,8 @@ public class Q1 {
 	protected void processInput() {
         float opType, oid, k;
 		double range;
-        double[] point;
-        point = new double[this.dim];
+        float[] point;
+        point = new float[this.dim];
         long start, end;
         int lineNum = 0;
 
@@ -199,13 +199,13 @@ public class Q1 {
 		}
 	}
 
-    private double[] extractPoint(String[] lineSplit, int startPos) throws NumberFormatException
+    private float[] extractPoint(String[] lineSplit, int startPos) throws NumberFormatException
     {
-        double[] tmp = new double[this.dim];
+        float[] tmp = new float[this.dim];
         for (int i = startPos, lineSplitLength = lineSplit.length;
              ((i < lineSplitLength) && (i < (startPos + this.dim))); i++)
         {
-            tmp[i-startPos] = Double.parseDouble(lineSplit[i]);
+            tmp[i-startPos] = (float)(Double.parseDouble(lineSplit[i]));
         }
         return tmp;
     }
@@ -262,29 +262,31 @@ public class Q1 {
 	
 	protected String getResults(List<Long> runtime) {
 		StringBuilder result = new StringBuilder();
+        int size = runtime.size();
 
-		Collections.sort(runtime);
-		try {
-			int size = runtime.size();
-			Long percent5th = runtime.get((int)(0.05*size));
-			Long percent95th = runtime.get((int)(0.95*size));
-			float median = getMedian(runtime);
-			long sum = 0;
-            for (Long aRuntime : runtime) {
-                sum += aRuntime;
+        if (size > 0) {
+            Collections.sort(runtime);
+            try {
+                Long percent5th = runtime.get((int) (0.05 * size));
+                Long percent95th = runtime.get((int) (0.95 * size));
+                float median = getMedian(runtime);
+                long sum = 0;
+                for (Long aRuntime : runtime) {
+                    sum += aRuntime;
+                }
+                double avg = sum / (double) size;
+
+                result.append("\nTotal ops = " + size);
+                result.append("\nAvg time: ").append(avg);
+                result.append("\n5th percentile: ").append(percent5th);
+                result.append("\n95th percentile: ").append(percent95th);
+                result.append("\nmedian: ").append(median);
+
+            } catch (Exception e) {
+                logger.traceError("Exception while generating runtime results");
+                e.printStackTrace();
             }
-			double avg = sum / (double)size;
-
-			result.append("\nTotal ops = "+size);
-			result.append("\nAvg time: ").append(avg);
-			result.append("\n5th percentile: ").append(percent5th);
-			result.append("\n95th percentile: ").append(percent95th);
-			result.append("\nmedian: ").append(median);
-
-		} catch (Exception e) {
-			logger.traceError("Exception while generating runtime results");
-			e.printStackTrace();
-		}
+        }
 
 		return result.toString();
 	}

@@ -15,33 +15,33 @@ public class HyperRectangle implements IDtoConvertible {
      * the max and min values for each dimension
      * in the rectangle.
      */
-    private double[][] points;
+    private float[][] points;
     private static int MAX_CORD = 0;
     private static int MIN_CORD = 1;
 
-    public double[][] getPoints() {
+    public float[][] getPoints() {
         return points;
     }
 
-    public void setPoints(double[][] points) {
+    public void setPoints(float[][] points) {
         this.points = points;
     }
 
     public HyperRectangle(int dimension) {
         this._dimension = dimension;
-        points = new double[dimension][2];
+        points = new float[dimension][2];
     }
 
-    public HyperRectangle(int dimension, SpatialPoint[] cords) {
+    public HyperRectangle(int dimension, SpatialPoint[] points) {
         this._dimension = dimension;
-        points = new double[dimension][2];
+        this.points = new float[dimension][2];
 
-        update(cords);
+        update(points);
     }
 
     private void update(SpatialPoint[] newPoints) {
         for (int j = 0; j < newPoints.length; j++) {
-            double[] cord = newPoints[j].getCords();
+            float[] cord = newPoints[j].getCords();
             assert cord.length == _dimension;
             for (int i = 0; i < cord.length; i++) {
                 if (points[i][MAX_CORD] < cord[i]) {
@@ -61,7 +61,7 @@ public class HyperRectangle implements IDtoConvertible {
     }
 
     public void update(HyperRectangle addedRegion) {
-        double[][] newPoints = addedRegion.getPoints();
+        float[][] newPoints = addedRegion.getPoints();
         assert newPoints.length == _dimension;
         for (int j = 0; j < _dimension; j++) {
             if (points[j][MAX_CORD] < newPoints[j][MAX_CORD]) {
@@ -79,8 +79,8 @@ public class HyperRectangle implements IDtoConvertible {
      * @return the intersecting region, null if not intersecting
      */
     public HyperRectangle getIntersection(HyperRectangle otherMBR) {
-        double[][] interPoints = new double[_dimension][2];
-        double[][] newPoints = otherMBR.getPoints();
+        float[][] interPoints = new float[_dimension][2];
+        float[][] newPoints = otherMBR.getPoints();
         assert newPoints.length == _dimension;
 
         boolean intersectExists = true;
@@ -108,7 +108,6 @@ public class HyperRectangle implements IDtoConvertible {
 
     @Override
     public MbrDTO toDTO() {
-        //TODO
-        return null;
+        return new MbrDTO(points);
     }
 }

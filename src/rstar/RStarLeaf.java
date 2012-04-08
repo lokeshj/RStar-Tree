@@ -4,6 +4,7 @@ import rstar.dto.NodeDTO;
 import rstar.interfaces.IRStarNode;
 import rstar.spatial.HyperRectangle;
 import rstar.spatial.SpatialPoint;
+import util.Constants;
 
 import java.util.ArrayList;
 
@@ -12,14 +13,21 @@ import java.util.ArrayList;
  * Date: 3/4/12
  * Time: 2:22 AM
  */
-public class RStarLeaf extends RStarNode implements IRStarNode {
-    private transient ArrayList<SpatialPoint> children;
+public class RStarLeaf extends RStarNode {
+    public ArrayList<SpatialPoint> children;
 
     public RStarLeaf(int dimension) {
         createId();
         _dimension = dimension;
         children = new ArrayList<SpatialPoint>(CAPACITY);
+        childPointers = new long[Constants.MAX_CHILDREN];
         mbr = new HyperRectangle(dimension);
+    }
+
+    public RStarLeaf(NodeDTO dto, long nodeId) {
+        this.nodeId = nodeId;
+        this.childPointers = dto.children;
+        // TODO mbr
     }
 
     @Override
@@ -65,7 +73,13 @@ public class RStarLeaf extends RStarNode implements IRStarNode {
 
     @Override
     public NodeDTO toDTO() {
-        //TODO
-        return super.toDTO();
+        return new NodeDTO(childPointers, mbr.toDTO(), true);
+    }
+
+    public boolean hasUnsavedPoints(){
+        return children.size() > childPointers.length;
+    }
+    public int indexOfFirstUnsavedPoint(){
+        return (children.size() - childPointers.length) - 1;
     }
 }

@@ -4,7 +4,6 @@ import rstar.dto.NodeDTO;
 import rstar.dto.PointDTO;
 import rstar.dto.TreeDTO;
 import rstar.interfaces.IDiskQuery;
-import rstar.interfaces.IRStarNode;
 import util.Constants;
 
 import java.io.*;
@@ -18,10 +17,7 @@ import java.nio.channels.FileChannel;
  */
 public class StorageManager implements IDiskQuery {
     RandomAccessFile dataStore;
-    RandomAccessFile nodeFile;
     FileChannel dataChannel;
-    FileChannel nodeChannel;
-
 
     public StorageManager() {
         try {
@@ -34,7 +30,7 @@ public class StorageManager implements IDiskQuery {
     }
 
     @Override
-    public void save(IRStarNode node) {
+    public void saveNode(RStarNode node) {
         if (node.isLeaf()) {
             try {
                 RStarLeaf leaf = (RStarLeaf) node;
@@ -44,21 +40,19 @@ public class StorageManager implements IDiskQuery {
                     int firstUnsaved = leaf.indexOfFirstUnsavedPoint();
                     assert firstUnsaved != -1;
                     for (int i = firstUnsaved; i < leaf.children.size(); i++) {
-                        leaf.childPointers[i] = savePoint(leaf.children.get(i).toDTO());
+                        leaf.childPointers.add(savePoint(leaf.children.get(i).toDTO()));
                     }
                 }
 
-                nodeFile = new RandomAccessFile(constructFilename(leaf.nodeId), "w");
-                nodeChannel = nodeFile.getChannel();
-                nodeFile.seek(0);       //overwrite the file
-
+                FileOutputStream fos = new FileOutputStream(new File(constructFilename(leaf.getNodeId())));
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 ObjectOutputStream oos = new ObjectOutputStream(bos);
                 oos.writeObject(leaf.toDTO());
                 oos.flush();
 
-                nodeChannel.write(ByteBuffer.wrap(bos.toByteArray()));
+                fos.write(bos.toByteArray());
                 oos.close();
+                fos.close();
 
             } catch (FileNotFoundException e) {
                 System.err.println("Exception while saving node to disk");
@@ -69,16 +63,15 @@ public class StorageManager implements IDiskQuery {
             try {
                 RStarInternal internal = (RStarInternal) node;
 
-                updateChannel(new File(constructFilename(internal.nodeId)));
-                nodeFile.seek(0);       //overwrite the file
-
+                FileOutputStream fos = new FileOutputStream(new File(constructFilename(internal.getNodeId())));
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 ObjectOutputStream oos = new ObjectOutputStream(bos);
                 oos.writeObject(internal.toDTO());
                 oos.flush();
 
-                nodeChannel.write(ByteBuffer.wrap(bos.toByteArray()));
+                fos.write(bos.toByteArray());
                 oos.close();
+                fos.close();
 
             } catch (FileNotFoundException e) {
                 System.err.println("Exception while saving node to disk");
@@ -89,7 +82,7 @@ public class StorageManager implements IDiskQuery {
     }
 
     @Override
-    public RStarNode load(long nodeId) throws FileNotFoundException {
+    public RStarNode loadNode(long nodeId) throws FileNotFoundException {
         return nodeFromDisk(constructFilename(nodeId));
     }
 
@@ -147,14 +140,13 @@ public class StorageManager implements IDiskQuery {
 
     private RStarNode nodeFromDisk(String filename) throws FileNotFoundException {
         try {
-            updateChannel(new File(filename));
-            nodeFile.seek(0);
-            ObjectInputStream ois = getNodeObjectStream();
+            FileInputStream fis = new FileInputStream(filename);
+            ObjectInputStream ois = new ObjectInputStream(fis);
             NodeDTO dto = (NodeDTO) ois.readObject();
             ois.close();
 
             RStarNode result;
-            if(dto.isLeaf)
+            if (dto.isLeaf)
                 result = new RStarLeaf(dto, nodeIdFromFilename(filename));
             else
                 result = new RStarInternal(dto, nodeIdFromFilename(filename));
@@ -173,7 +165,7 @@ public class StorageManager implements IDiskQuery {
      * saves the R* Tree to saveFile.
      * doesn't use RandomAccessFile
      * @param tree the DTO of the tree to be saved
-     * @param saveFile save file location
+     * @param saveFile saveNode file location
      * @return 1 is successful, else -1
      */
     @Override
@@ -190,7 +182,7 @@ public class StorageManager implements IDiskQuery {
             oos.writeObject(tree);
             oos.flush();
             oos.close();
-            status = 1;             // successful save
+            status = 1;             // successful saveNode
         } catch (IOException e) {
             System.err.println("Error while saving Tree to " + saveFile.toURI());
         }
@@ -199,7 +191,7 @@ public class StorageManager implements IDiskQuery {
 
     /**
      * loads a R* Tree from disk
-     * @param saveFile the file to load the tree from
+     * @param saveFile the file to loadNode the tree from
      * @return DTO of the loaded R* Tree, null if none found
      * @throws FileNotFoundException
      */
@@ -220,20 +212,15 @@ public class StorageManager implements IDiskQuery {
         return null;
     }
 
-    private void updateChannel(File file) throws FileNotFoundException {
-        nodeFile = new RandomAccessFile(file, "rw");
-        nodeChannel = nodeFile.getChannel();
-    }
-
     public String constructFilename(long nodeId) {
-        String file = Constants.FILE_PREFIX + nodeId + Constants.FILE_SUFFIX;
+        String file = Constants.TREE_DATA_DIRECTORY + "/" + Constants.NODE_FILE_PREFIX + nodeId + Constants.NODE_FILE_SUFFIX;
         return file;
     }
 
     public long nodeIdFromFilename(String filename) {
-        int i2 = filename.indexOf(Constants.FILE_SUFFIX);
+        int i2 = filename.indexOf(Constants.NODE_FILE_SUFFIX);
         assert i2 != -1;
-        return Long.parseLong(filename.substring(Constants.FILE_PREFIX.length(), i2));
+        return Long.parseLong(filename.substring((Constants.TREE_DATA_DIRECTORY+"/"+Constants.NODE_FILE_PREFIX).length(), i2));
     }
 
     private ObjectInputStream getPointObjectStream() throws IOException {
@@ -246,20 +233,6 @@ public class StorageManager implements IDiskQuery {
             @Override
             public int read(byte[] b, int off, int len) throws IOException {
                 return dataStore.read(b, off, len);
-            }
-        });
-    }
-
-    private ObjectInputStream getNodeObjectStream() throws IOException {
-        return new ObjectInputStream(new InputStream() {
-            @Override
-            public int read() throws IOException {
-                return nodeFile.read();
-            }
-
-            @Override
-            public int read(byte[] b, int off, int len) throws IOException {
-                return nodeFile.read(b, off, len);
             }
         });
     }

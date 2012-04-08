@@ -7,6 +7,8 @@ import rstar.spatial.SpatialPoint;
 import util.Constants;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * User: Lokesh
@@ -19,8 +21,8 @@ public class RStarLeaf extends RStarNode {
     public RStarLeaf(int dimension) {
         createId();
         _dimension = dimension;
-        children = new ArrayList<SpatialPoint>(CAPACITY);
-        childPointers = new long[Constants.MAX_CHILDREN];
+        children = new ArrayList<SpatialPoint>(Constants.MAX_CHILDREN);
+        childPointers = new ArrayList<Long>();
         mbr = new HyperRectangle(dimension);
     }
 
@@ -37,7 +39,7 @@ public class RStarLeaf extends RStarNode {
 
     @Override
     public boolean isNotFull() {
-        return (children.size() < CAPACITY);
+        return (children.size() < Constants.MAX_CHILDREN);
     }
 
     @Override
@@ -67,7 +69,7 @@ public class RStarLeaf extends RStarNode {
     }
 
     private ArrayList<SpatialPoint> pointsInRegion(HyperRectangle region) {
-        //TODO
+        //TODO pointsInRegion
         return children;
     }
 
@@ -77,9 +79,9 @@ public class RStarLeaf extends RStarNode {
     }
 
     public boolean hasUnsavedPoints(){
-        return children.size() > childPointers.length;
+        return children.size() > childPointers.size();
     }
     public int indexOfFirstUnsavedPoint(){
-        return (children.size() - childPointers.length) - 1;
+        return (children.size() - childPointers.size()) - 1;
     }
 }

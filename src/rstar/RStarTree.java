@@ -2,7 +2,6 @@ package rstar;
 
 import rstar.dto.TreeDTO;
 import rstar.interfaces.IDtoConvertible;
-import rstar.interfaces.IRStarNode;
 import rstar.interfaces.ISpatialQuery;
 import rstar.spatial.SpatialPoint;
 import util.Constants;
@@ -25,15 +24,18 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
     private long rootPointer = -1;
 
     public RStarTree() {
-        dimension = Constants.DIMENSION;
-        pagesize = Constants.PAGESIZE;
-        saveFile = new File(Constants.TREE_FILE);
-        storage = new StorageManager();
-        initStorage();
-        setCapacities();
+        init(Constants.TREE_FILE, Constants.DIMENSION, Constants.PAGESIZE);
+    }
+
+    public RStarTree(int dimension) {
+        init(Constants.TREE_FILE, dimension, Constants.PAGESIZE);
     }
 
     public RStarTree(String saveFile, int dimension, int pagesize) {
+        init(saveFile, dimension, pagesize);
+    }
+
+    private void init(String saveFile, int dimension, int pagesize){
         this.dimension = dimension;
         this.pagesize = pagesize;
         this.saveFile = new File(saveFile);
@@ -52,31 +54,8 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
     }
 
     private void initStorage() {
-        if (saveFile.exists() && saveFile.length() != 0) {
-            try {
-                TreeDTO treeData = storage.loadTree(saveFile);
-                if (treeData != null) {             //update tree fields from saveFile
-                    dimension = treeData.dimension;
-                    pagesize = treeData.pagesize;
-                    rootPointer = treeData.rootPointer;
-                    System.out.printf("Tree loaded successfully from %s. dimension = %d and pagesize = %d%n",
-                            saveFile.getName(), dimension, pagesize);
-                }
-            } catch (FileNotFoundException e) {
-                System.err.println("Failed to load R* Tree from "+saveFile.getName());
-            }
-
-            /*
-             *  check for the node-data directory. create one if doesn't exist
-             */
-            File dataDir = new File(saveFile.getParentFile(), Constants.TREE_DATA_DIRECTORY);
-            if (!dataDir.exists() || !dataDir.isDirectory()) {
-                if (!dataDir.mkdir()) {
-                    System.err.println("Failed to create data directory of the tree. Exiting..");
-                    System.exit(1);
-                }
-            }
-        }
+        loadTree();
+        createDataDir();
     }
 
     private void setCapacities(){
@@ -86,9 +65,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         Constants.MIN_CHILDREN = Constants.MAX_CHILDREN/3;      // m = M/3
     }
 
-    /*
-        QUERY FUNCTIONS
-     */
+    /* QUERY FUNCTIONS */
 
     /**
      * inserts a point in the tree and saves it on disk
@@ -97,10 +74,29 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      */
     @Override
     public int insert(SpatialPoint point) {
+        //TODO insert
+        System.out.println("inserting point with oid=" + point.getOid());
         loadRoot();
-        //TODO
-        System.out.println("inserting point with oid="+point.getOid());
-        return 1;
+        if (root.isLeaf()) {
+            // root is leaf
+            if (root.isNotFull()) {
+                //insert in root
+                int status = root.insert(point);
+                if(status == 1) {
+                    storage.saveNode(root);
+                } else {
+                    System.out.println("failed to insert");
+                }
+
+                return status;
+            } else {
+                System.out.println("node full");
+                return -1;
+            }
+        } else {
+            System.out.println("root is not leaf");
+            return -1;
+        }
     }
 
     /**
@@ -111,7 +107,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      */
     @Override
     public float pointSearch(SpatialPoint point) {
-        //TODO
+        //TODO pointSearch
         System.out.println("searching point :"+point);
         return -1;
     }
@@ -124,7 +120,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      */
     @Override
     public SpatialPoint[] rangeSearch(SpatialPoint center, double range) {
-        //TODO
+        //TODO rangeSearch
         System.out.println("range search in range "+range+" of point: "+center);
         return null;
     }
@@ -137,7 +133,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      */
     @Override
     public SpatialPoint[] knnSearch(SpatialPoint center, int k) {
-        //TODO
+        //TODO knnsearch
         System.out.println("knn search with k = "+k+" and point: "+center);
         return null;
     }
@@ -173,7 +169,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         //check for valid nodeId
         if (nodeId != -1) {
             try {
-                return storage.load(nodeId);
+                return storage.loadNode(nodeId);
             } catch (FileNotFoundException e) {
                 System.err.println("Error while loading R* Tree node from file " + storage.constructFilename(nodeId));
             }
@@ -185,9 +181,8 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      * saves the tree details to disk
      * @return 1 if successful, -1 otherwise
      */
-    public int saveTree() {
-        TreeDTO save = new TreeDTO(dimension, pagesize, rootPointer);
-        return storage.saveTree(save, saveFile);
+    public int save() {
+        return storage.saveTree(this.toDTO(), saveFile);
     }
 
     /**
@@ -198,7 +193,36 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      */
     @Override
     public TreeDTO toDTO() {
-        //TODO
-        return null;
+        return new TreeDTO(dimension, Constants.PAGESIZE, rootPointer);
+    }
+
+    private void createDataDir() {
+        // check for the node-data directory. create one if doesn't exist
+        File dataDir = new File(saveFile.getParentFile(), Constants.TREE_DATA_DIRECTORY);
+        if (!dataDir.exists() || !dataDir.isDirectory()) {
+            if (!dataDir.mkdir()) {
+                System.err.println("Failed to create data directory of the tree. Exiting..");
+                System.exit(1);
+            }
+            System.out.println("Data directory created");
+        }
+    }
+
+    private void loadTree() {
+        if (saveFile.exists() && saveFile.length() != 0) {
+            try {
+                TreeDTO treeData = storage.loadTree(saveFile);
+                if (treeData != null) {             //update tree fields from saveFile
+                    this.dimension = treeData.dimension;
+                    this.pagesize = treeData.pagesize;
+                    this.rootPointer = treeData.rootPointer;
+                    System.out.printf("Tree loaded successfully from %s. dimension = %d and pagesize = %d bytes%n",
+                            saveFile.getName(), dimension, pagesize);
+                }
+            } catch (FileNotFoundException e) {
+                System.err.println("Failed to load R* Tree from "+saveFile.getName());
+            }
+
+        }
     }
 }

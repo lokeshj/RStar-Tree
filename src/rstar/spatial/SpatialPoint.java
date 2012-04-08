@@ -65,7 +65,6 @@ public class SpatialPoint implements IDtoConvertible {
 
     @Override
     public PointDTO toDTO() {
-        //TODO
-        return null;
+        return new PointDTO(_oid, _cords);
     }
 }

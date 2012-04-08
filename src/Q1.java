@@ -1,6 +1,5 @@
 import rstar.RStarTree;
 import rstar.spatial.SpatialPoint;
-import util.Constants;
 import util.Trace;
 
 import java.io.*;
@@ -12,10 +11,9 @@ import static util.Utils.getMedian;
 
 public class Q1 {
 
-	private static RStarTree tree;
-    private int dim;
+	private RStarTree tree;
+    private int dimension;
 	protected String inputFile;
-    protected String pageFile;
 	protected String resultFile;
 	private List<Long> insertRunTime;
 	private List<Long> searchRunTime;
@@ -30,14 +28,10 @@ public class Q1 {
 		controller.processInput();
 		System.out.println("Finished Processing file ...");
 
-		controller.writeRuntimeToFile(controller.insertRunTime,
-                tree.getClass().getSimpleName() + "_Insertion_runtime.txt");
-		controller.writeRuntimeToFile(controller.searchRunTime,
-                tree.getClass().getSimpleName() + "_Search_runtime.txt");
-		controller.writeRuntimeToFile(controller.rangeRuntime,
-                tree.getClass().getSimpleName() + "_RangeSearch_runtime.txt");
-		controller.writeRuntimeToFile(controller.knnRuntime,
-                tree.getClass().getSimpleName() + "_KNNSearch_runtime.txt");
+        controller.writeRuntimeToFile(controller.insertRunTime, "Insertion_runtime.txt");
+        controller.writeRuntimeToFile(controller.searchRunTime, "Search_runtime.txt");
+        controller.writeRuntimeToFile(controller.rangeRuntime, "RangeSearch_runtime.txt");
+        controller.writeRuntimeToFile(controller.knnRuntime, "KNNSearch_runtime.txt");
 
 		controller.printResults();
 	}
@@ -45,7 +39,7 @@ public class Q1 {
 	public Q1(String[] args) {
 		if(args.length >= 2){
 			this.inputFile = args[0];
-            this.dim = Integer.parseInt(args[1]);
+            this.dimension = Integer.parseInt(args[1]);
 
 			if (args.length >= 3)
 				this.resultFile = args[2];
@@ -56,7 +50,7 @@ public class Q1 {
 			this.printUsage();
 			System.exit(1);
 		}
-		tree = new RStarTree(Constants.TREE_FILE, dim, Constants.PAGESIZE);
+		tree = new RStarTree(dimension);
 		this.insertRunTime = new ArrayList<Long>();
 		this.searchRunTime = new ArrayList<Long>();
 		this.rangeRuntime = new ArrayList<Long>();
@@ -69,7 +63,7 @@ public class Q1 {
         float opType, oid, k;
 		double range;
         float[] point;
-        point = new float[this.dim];
+        point = new float[this.dimension];
         long start, end;
         int lineNum = 0;
 
@@ -87,7 +81,7 @@ public class Q1 {
 				case 0:
 				{       //insertion
 					try {
-                        if (lineSplit.length != (this.dim + 2)) {
+                        if (lineSplit.length != (this.dimension + 2)) {
                             throw new AssertionError();
                         }
 
@@ -114,7 +108,7 @@ public class Q1 {
                     case 1:
 				{     //point search
                     try{
-                        if (lineSplit.length != this.dim + 1) {
+                        if (lineSplit.length != this.dimension + 1) {
                             throw new AssertionError();
                         }
                         point = extractPoint(lineSplit, 1);
@@ -137,12 +131,12 @@ public class Q1 {
                     case 2:
 				{   //range search
                     try{
-                        if (lineSplit.length != this.dim + 2) {
+                        if (lineSplit.length != this.dimension + 2) {
                             throw new AssertionError();
                         }
 
                         point = extractPoint(lineSplit, 1);
-                        range = Double.parseDouble(lineSplit[this.dim + 1]);
+                        range = Double.parseDouble(lineSplit[this.dimension + 1]);
 
                         start = System.currentTimeMillis();
                         tree.rangeSearch(new SpatialPoint(point), range);
@@ -161,12 +155,12 @@ public class Q1 {
                     case 3:
 				{   //knn search
                     try{
-                        if (lineSplit.length != this.dim + 2) {
+                        if (lineSplit.length != this.dimension + 2) {
                             throw new AssertionError();
                         }
 
                         point = extractPoint(lineSplit, 1);
-                        k = Float.parseFloat(lineSplit[this.dim + 1]);
+                        k = Float.parseFloat(lineSplit[this.dimension + 1]);
 
                         start = System.currentTimeMillis();
                         tree.knnSearch(new SpatialPoint(point), (int)k);
@@ -191,21 +185,20 @@ public class Q1 {
                     break;
 			}
 			input.close();
+            tree.save();
 		}
 		catch (Exception e) {
 			logger.traceError("Error while reading input file. Line " + lineNum + " Skipped\nError Details:");
-			//e.printStackTrace();
-//			System.exit(1);
 		}
 	}
 
-    private float[] extractPoint(String[] lineSplit, int startPos) throws NumberFormatException
+    private float[] extractPoint(String[] points, int startPos) throws NumberFormatException
     {
-        float[] tmp = new float[this.dim];
-        for (int i = startPos, lineSplitLength = lineSplit.length;
-             ((i < lineSplitLength) && (i < (startPos + this.dim))); i++)
+        float[] tmp = new float[this.dimension];
+        for (int i = startPos, lineSplitLength = points.length;
+             ((i < lineSplitLength) && (i < (startPos + this.dimension))); i++)
         {
-            tmp[i-startPos] = (float)(Double.parseDouble(lineSplit[i]));
+            tmp[i-startPos] = Float.parseFloat(points[i]);
         }
         return tmp;
     }

@@ -13,9 +13,9 @@ import java.io.FileNotFoundException;
  * Time: 9:07 PM
  */
 public interface IDiskQuery {
-    void save(IRStarNode node);
+    void saveNode(RStarNode node);
 
-    RStarNode load(long nodeId) throws FileNotFoundException;
+    RStarNode loadNode(long nodeId) throws FileNotFoundException;
 
     long savePoint(PointDTO pointDTO);
 

@@ -18,8 +18,8 @@ public class RStarInternal extends RStarNode {
 
     public RStarInternal(int dimension) {
         _dimension = dimension;
-        children = new ArrayList<IRStarNode>(CAPACITY);
-        childPointers = new long[Constants.MAX_CHILDREN];
+        children = new ArrayList<IRStarNode>(Constants.MAX_CHILDREN);
+        childPointers = new ArrayList<Long>(Constants.MAX_CHILDREN);
         mbr = new HyperRectangle(dimension);
     }
 
@@ -36,7 +36,7 @@ public class RStarInternal extends RStarNode {
 
     @Override
     public boolean isNotFull() {
-        return children.size() < CAPACITY;
+        return children.size() < Constants.MAX_CHILDREN;
     }
 
     @Override
@@ -56,7 +56,7 @@ public class RStarInternal extends RStarNode {
 
     @Override
     public ArrayList<IRStarNode> getOverlappingChildren(HyperRectangle searchRegion) {
-        //TODO
+        //TODO getOverlappingChildren
         return children;
     }
 

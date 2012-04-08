@@ -2,6 +2,7 @@ package rstar.spatial;
 
 import rstar.dto.MbrDTO;
 import rstar.interfaces.IDtoConvertible;
+import util.Constants;
 
 /**
  * User: Lokesh
@@ -37,6 +38,11 @@ public class HyperRectangle implements IDtoConvertible {
         this.points = new float[dimension][2];
 
         update(points);
+    }
+
+    public HyperRectangle(MbrDTO dto) {
+        this._dimension = Constants.DIMENSION;
+        this.points = dto.points;
     }
 
     private void update(SpatialPoint[] newPoints) {

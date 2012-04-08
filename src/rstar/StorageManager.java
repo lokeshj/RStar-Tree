@@ -37,10 +37,8 @@ public class StorageManager implements IDiskQuery {
 
                 if (leaf.hasUnsavedPoints()) {
                     //save unsaved points to disk first.
-                    int firstUnsaved = leaf.indexOfFirstUnsavedPoint();
-                    assert firstUnsaved != -1;
-                    for (int i = firstUnsaved; i < leaf.children.size(); i++) {
-                        leaf.childPointers.add(savePoint(leaf.children.get(i).toDTO()));
+                    for (int i = leaf.loadedChildren.size() - 1; i >= 0; i++) {
+                        leaf.childPointers.add(savePoint(leaf.loadedChildren.remove(i).toDTO()));
                     }
                 }
 

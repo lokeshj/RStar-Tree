@@ -1,13 +1,17 @@
 package rstar;
 
+import rstar.dto.PointDTO;
 import rstar.dto.TreeDTO;
 import rstar.interfaces.IDtoConvertible;
 import rstar.interfaces.ISpatialQuery;
+import rstar.spatial.HyperRectangle;
 import rstar.spatial.SpatialPoint;
 import util.Constants;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: Lokesh
@@ -22,6 +26,10 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
     private StorageManager storage;
     private RStarNode root;
     private long rootPointer = -1;
+
+    private float _pointSearchResult = -1;
+    private ArrayList<SpatialPoint> _rangeSearchResult;
+    private ArrayList<SpatialPoint> _knnSearchResult;
 
     public RStarTree() {
         init(Constants.TREE_FILE, Constants.DIMENSION, Constants.PAGESIZE);
@@ -78,7 +86,6 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         System.out.println("inserting point with oid=" + point.getOid());
         loadRoot();
         if (root.isLeaf()) {
-            // root is leaf
             if (root.isNotFull()) {
                 //insert in root
                 int status = root.insert(point);
@@ -107,37 +114,101 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      */
     @Override
     public float pointSearch(SpatialPoint point) {
-        //TODO pointSearch
-        System.out.println("searching point :"+point);
-        return -1;
+        System.out.println("searching point :" + point);
+        loadRoot();
+        _pointSearch(root, point);
+        return _pointSearchResult;
+    }
+
+    private void _pointSearch(RStarNode start, SpatialPoint point) {
+        HyperRectangle searchRegion = new HyperRectangle(dimension);
+        searchRegion.update(point);
+        HyperRectangle intersection = start.getMBR().getIntersection(searchRegion);
+        _pointSearchResult = -1;
+
+        if(intersection != null) {
+            if (start.isLeaf()) {
+                float[] searchPoints = point.getCords();
+
+                //lazy loading of child points
+                for (Long pointer : root.childPointers) {
+                    PointDTO dto = storage.loadPoint(pointer);
+
+                    float[] candidates = dto.coords;
+                    boolean found = true;
+                    for (int i = 0; i < candidates.length; i++) {
+                        if (candidates[i] != searchPoints[i])
+                            found = false;
+                        break;
+                    }
+                    if (found) {
+                        _pointSearchResult = dto.oid;
+                    }
+                }
+            } else {
+                for (Long pointer : root.childPointers) {
+                    if(_pointSearchResult != -1)         // point found
+                        break;
+
+                    try {
+                        RStarNode childNode = storage.loadNode(pointer);    //recurse down
+                        _pointSearch(childNode, point);
+
+                    } catch (FileNotFoundException e) {
+                        System.err.println("Exception while loading node from disk");
+                    }
+                }
+            }
+        }
     }
 
     /**
      * searches for points in the given range of the center point
      * @param center center point of the search region.
      * @param range radius of the search region.
-     * @return array of all the points found in the range
+     * @return ArrayList of all the points found in the range
      */
     @Override
-    public SpatialPoint[] rangeSearch(SpatialPoint center, double range) {
+    public List<SpatialPoint> rangeSearch(SpatialPoint center, double range) {
+        System.out.println("range search in range " + range + " of point: " + center);
+
+        float[] points = center.getCords();
+        float[][] mbrPoints = new float[dimension][2];
+        for (int i = 0; i < dimension; i++) {
+            mbrPoints[i][0] = points[i] + (float) range;
+            mbrPoints[i][1] = points[i] - (float) range;
+        }
+
+        HyperRectangle searchRegion = new HyperRectangle(dimension);
+        searchRegion.setPoints(mbrPoints);
+
+        _rangeSearchResult = new ArrayList<SpatialPoint>();
+        loadRoot();
+        _rangeSearch(root, searchRegion);
+        return _rangeSearchResult;
+    }
+
+    private void _rangeSearch(RStarNode start, HyperRectangle searchRegion) {
         //TODO rangeSearch
-        System.out.println("range search in range "+range+" of point: "+center);
-        return null;
     }
 
     /**
      * searches for the k nearest neighbours of a center point
      * @param center SpatialPoint
      * @param k number of nearest neighbours required
-     * @return array of the k nearest neighbours of center.
+     * @return ArrayList of the k nearest neighbours of center.
      */
     @Override
-    public SpatialPoint[] knnSearch(SpatialPoint center, int k) {
-        //TODO knnsearch
+    public List<SpatialPoint> knnSearch(SpatialPoint center, int k) {
         System.out.println("knn search with k = "+k+" and point: "+center);
-        return null;
+        _knnSearchResult = new ArrayList<SpatialPoint>();
+        //TODO knnsearch
+        return _knnSearchResult;
     }
 
+    private void _knnSearch(RStarNode start, SpatialPoint point, int k) {
+
+    }
     /*
      ***** DISK RELATED FUNCTIONS ****
      */

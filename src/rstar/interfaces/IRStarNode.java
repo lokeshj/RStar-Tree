@@ -14,7 +14,7 @@ public interface IRStarNode{
 
     public HyperRectangle getMBR();
 
-    public <T> ArrayList<T> getOverlappingChildren(HyperRectangle searchRegion);
+//    public <T> ArrayList<T> getOverlappingChildren(HyperRectangle searchRegion);
 
     void createId();
 

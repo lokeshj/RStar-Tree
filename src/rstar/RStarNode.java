@@ -36,9 +36,4 @@ public abstract class RStarNode implements IDtoConvertible, IRStarNode{
     public void setNodeId(long nodeId1){
         this.nodeId = nodeId1;
     }
-
-    @Override
-    public NodeDTO toDTO() {
-        return null;
-    }
 }

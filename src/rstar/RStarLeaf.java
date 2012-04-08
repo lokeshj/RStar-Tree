@@ -1,14 +1,11 @@
 package rstar;
 
 import rstar.dto.NodeDTO;
-import rstar.interfaces.IRStarNode;
 import rstar.spatial.HyperRectangle;
 import rstar.spatial.SpatialPoint;
 import util.Constants;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 
 /**
  * User: Lokesh
@@ -16,19 +13,22 @@ import java.util.Collections;
  * Time: 2:22 AM
  */
 public class RStarLeaf extends RStarNode {
-    public ArrayList<SpatialPoint> children;
+    public ArrayList<SpatialPoint> loadedChildren;
 
     public RStarLeaf(int dimension) {
         createId();
         _dimension = dimension;
-        children = new ArrayList<SpatialPoint>(Constants.MAX_CHILDREN);
+        loadedChildren = new ArrayList<SpatialPoint>();
         childPointers = new ArrayList<Long>();
         mbr = new HyperRectangle(dimension);
     }
 
     public RStarLeaf(NodeDTO dto, long nodeId) {
         this.nodeId = nodeId;
-        this.childPointers = dto.children;
+        _dimension = Constants.DIMENSION;
+        childPointers = dto.children;
+        loadedChildren = new ArrayList<SpatialPoint>();
+//        mbr = dto.mbr
         // TODO mbr
     }
 
@@ -39,16 +39,17 @@ public class RStarLeaf extends RStarNode {
 
     @Override
     public boolean isNotFull() {
-        return (children.size() < Constants.MAX_CHILDREN);
+        return ((childPointers.size() + loadedChildren.size()) < Constants.MAX_CHILDREN);
     }
 
     @Override
     public <T> int insert(T newChild) {
-        if (this.isNotFull() && (newChild instanceof SpatialPoint)) {
-            children.add((SpatialPoint) newChild);
+        if (this.isNotFull()) {
+            loadedChildren.add((SpatialPoint) newChild);
             mbr.update((SpatialPoint) newChild);
             return 1;
-        } else return -1;
+        }
+        else return -1;
     }
 
     @Override
@@ -56,13 +57,7 @@ public class RStarLeaf extends RStarNode {
         return mbr;
     }
 
-    @Override
-    public long getNodeId() {
-        createId();
-        return nodeId;
-    }
-
-    @Override
+   /* @Override
     public ArrayList<SpatialPoint> getOverlappingChildren(HyperRectangle searchRegion) {
         HyperRectangle intersection = mbr.getIntersection(searchRegion);
         return pointsInRegion(intersection);
@@ -70,8 +65,8 @@ public class RStarLeaf extends RStarNode {
 
     private ArrayList<SpatialPoint> pointsInRegion(HyperRectangle region) {
         //TODO pointsInRegion
-        return children;
-    }
+        return loadedChildren;
+    }*/
 
     @Override
     public NodeDTO toDTO() {
@@ -79,9 +74,6 @@ public class RStarLeaf extends RStarNode {
     }
 
     public boolean hasUnsavedPoints(){
-        return children.size() > childPointers.size();
-    }
-    public int indexOfFirstUnsavedPoint(){
-        return (children.size() - childPointers.size()) - 1;
+        return loadedChildren.size() > 0;
     }
 }

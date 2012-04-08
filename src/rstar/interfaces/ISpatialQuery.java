@@ -2,6 +2,8 @@ package rstar.interfaces;
 
 import rstar.spatial.SpatialPoint;
 
+import java.util.List;
+
 /**
  * User: Lokesh
  * Date: 3/4/12
@@ -24,19 +26,21 @@ public interface ISpatialQuery {
     float pointSearch(SpatialPoint point);
 
     /**
-     * returns all points in distance range of
-     * point center
+     * returns all points in distance <i>range</i> of
+     * point <i>center</i>
+     *
      * @param center
      * @param range
-     * @return array of points in the range
+     * @return List of points in the range
      */
-    SpatialPoint[] rangeSearch(SpatialPoint center, double range);
+    List<SpatialPoint> rangeSearch(SpatialPoint center, double range);
 
     /**
-     * returns the k nearest neighbours of center
+     * returns the k nearest neighbours of <i>center</i>
+     *
      * @param center
      * @param k
-     * @return array of k nearest neighbours of center
+     * @return List of k nearest neighbours of center
      */
-    SpatialPoint[] knnSearch(SpatialPoint center, int k);
+    List<SpatialPoint> knnSearch(SpatialPoint center, int k);
 }

@@ -181,7 +181,7 @@ public class Q1 {
 					logger.traceError("Invalid query type " + opType + " at line " + lineNum + ". Skipped .. ");
 					break;
 				}
-                if (lineNum == 100)
+                if (lineNum == 1000)
                     break;
 			}
 			input.close();

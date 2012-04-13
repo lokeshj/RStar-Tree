@@ -28,8 +28,7 @@ public class RStarLeaf extends RStarNode {
         _dimension = Constants.DIMENSION;
         childPointers = dto.children;
         loadedChildren = new ArrayList<SpatialPoint>();
-//        mbr = dto.mbr
-        // TODO mbr
+        mbr = new HyperRectangle(dto.mbr);
     }
 
     @Override

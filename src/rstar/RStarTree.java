@@ -28,6 +28,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
     private StorageManager storage;
     private RStarNode root;
     private long rootPointer = -1;
+    private ArrayList<Boolean> levelReinserts;
 
     private float _pointSearchResult = -1;
     private ArrayList<SpatialPoint> _rangeSearchResult;
@@ -83,28 +84,32 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      */
     @Override
     public int insert(SpatialPoint point) {
-        //TODO insert
         System.out.println("inserting point with oid=" + point.getOid());
-        loadRoot();
-        if (root.isLeaf()) {
-            if (root.isNotFull()) {
-                //insert in root
-                int status = root.insert(point);
-                if(status == 1) {
-                    storage.saveNode(root);
-                } else {
-                    System.out.println("failed to insert");
-                }
-
-                return status;
+        RStarLeaf target = chooseSubtree(point);
+        if (target.isNotFull()) {
+            int status = target.insert(point);
+            if(status == 1) {
+                storage.saveNode(target);
             } else {
-                System.out.println("node full");
-                return -1;
+                System.out.println("failed to insert point with oid=" + point.getOid());
             }
+            return status;
         } else {
-            System.out.println("root is not leaf");
-            return -1;
+            int status = treatOverflow(target);
+            return status;
         }
+    }
+
+    private RStarLeaf chooseSubtree(SpatialPoint newPoint) {
+        //TODO choosesubtree
+        loadRoot();
+        return (RStarLeaf)root;
+    }
+
+    private int treatOverflow(RStarLeaf target) {
+        //TODO treatOverflow
+        levelReinserts = new ArrayList<Boolean>();
+        return 1;
     }
 
     /**

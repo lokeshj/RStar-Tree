@@ -116,9 +116,97 @@ public class HyperRectangle implements IDtoConvertible {
         return intersect;
     }
 
-    public long deltaV_onInclusion(HyperRectangle newmbr) {
-        //TODO deltaVOnInclusion
-        return 0;
+    public double deltaV_onInclusion(HyperRectangle newmbr) {
+        HyperRectangle tempMbr = new HyperRectangle(_dimension);
+        tempMbr.setPoints(points);
+        tempMbr.update(newmbr);
+
+        return tempMbr.volume() - this.volume();
+    }
+
+    /**
+     * Computes the volume of this MBR.
+     *
+     * @return the volume of this MBR
+     */
+    public double volume() {
+        double vol = 1;
+        for (int i = 0; i < points.length; i++) {
+            vol *= points[i][MAX_CORD] - points[i][MIN_CORD];
+        }
+        return vol;
+    }
+
+    /**
+     * Computes the perimeter of this MBR.
+     *
+     * @return the perimeter of this MBR
+     */
+    public double perimeter() {
+        double perimeter = 0;
+        for (int i = 0; i < points.length; i++) {
+            perimeter += points[i][MAX_CORD] - points[i][MIN_CORD];
+        }
+        return perimeter;
+    }
+
+    /**
+     * Computes the volume of the overlapping box between this MBR and the given MBR
+     * and return the relation between the volume of the overlapping box and the volume of both MBRs.
+     *
+     * @param mbr the MBR for which the intersection volume with this MBR should be computed
+     * @return the relation between the volume of the overlapping box and the volume of this MBR
+     *         and the given MBR
+     */
+    public double overlapVolume(HyperRectangle mbr) {
+        if (this._dimension != mbr._dimension)
+            throw new IllegalArgumentException("This MBR and the given MBR need same dimensionality");
+
+        float[][] otherPoints = mbr.getPoints();
+        // the maximal and minimal value of the overlap box.
+        float omax, omin;
+
+        // the overlap volume
+        double overlap = 1.0;
+
+        for (int i = 0; i < points.length; i++) {
+            // The maximal value of that overlap box in the current
+            // dimension is the minimum of the max values.
+            omax = Math.min(points[i][MAX_CORD], otherPoints[i][MAX_CORD]);
+            // The minimal value is the maximum of the min values.
+            omin = Math.max(points[i][MIN_CORD], otherPoints[i][MIN_CORD]);
+
+            // if omax <= omin in any dimension, the overlap box has a volume of zero
+            if (omax <= omin) {
+                return 0.0;
+            }
+
+            overlap *= omax - omin;
+        }
+
+        return overlap;
+    }
+
+    /**
+     * Computes the union MBR of this MBR and the given MBR.
+     *
+     * @param mbr the MBR to be united with this MBR
+     * @return the union MBR of this MBR and the given MBR
+     */
+    public HyperRectangle union(HyperRectangle mbr) {
+        if (this._dimension != mbr._dimension)
+            throw new IllegalArgumentException("This MBR and the given MBR need same dimensionality");
+
+        float[][] otherPoints = mbr.getPoints();
+        float[][] unionPoints = new float[_dimension][2];
+
+        for (int i = 0; i < this._dimension; i++) {
+            unionPoints[i][MIN_CORD] = Math.min(this.points[i][MIN_CORD], otherPoints[i][MIN_CORD]);
+            unionPoints[i][MAX_CORD] = Math.max(this.points[i][MAX_CORD], otherPoints[i][MAX_CORD]);
+        }
+        HyperRectangle union = new HyperRectangle(_dimension);
+        union.setPoints(unionPoints);
+        return union;
     }
 
     @Override

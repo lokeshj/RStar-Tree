@@ -26,7 +26,7 @@ public class RStarInternal extends RStarNode {
     public RStarInternal(NodeDTO dto, long nodeId) {
         this.nodeId = nodeId;
         this.childPointers = dto.children;
-        //TODO MBR
+        this.mbr = new HyperRectangle(dto.mbr);
     }
 
     @Override
@@ -54,7 +54,7 @@ public class RStarInternal extends RStarNode {
         return mbr;
     }
 
-    public long changeInVolume(SpatialPoint newPoint) {
+    public double deltaV_onInclusion(SpatialPoint newPoint) {
         HyperRectangle pointmbr = new HyperRectangle(_dimension);
         pointmbr.update(newPoint);
         return mbr.deltaV_onInclusion(pointmbr);

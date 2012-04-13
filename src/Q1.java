@@ -100,7 +100,7 @@ public class Q1 {
                         break;
                     }
                     catch (AssertionError error){
-                        logger.traceError("Error while parsing line " + lineNum + ". Skipped Insertion");
+                        logger.traceError("Error while parsing line " + lineNum + ".(Invalid Dimensionality) Skipped Insertion");
                         break;
                     }
                 }

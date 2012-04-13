@@ -5,15 +5,13 @@ import rstar.dto.TreeDTO;
 import rstar.interfaces.IDtoConvertible;
 import rstar.interfaces.ISpatialQuery;
 import rstar.spatial.HyperRectangle;
+import rstar.spatial.SpatialComparator;
 import rstar.spatial.SpatialPoint;
 import util.Constants;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: Lokesh
@@ -65,7 +63,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
     private void initStorage() {
         loadTree();
-        createDataDir();
+        storage.createDataDir(saveFile);
     }
 
     private void setCapacities(){
@@ -86,6 +84,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
     public int insert(SpatialPoint point) {
         System.out.println("inserting point with oid=" + point.getOid());
         RStarLeaf target = chooseSubtree(point);
+
         if (target.isNotFull()) {
             int status = target.insert(point);
             if(status == 1) {
@@ -95,21 +94,280 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
             }
             return status;
         } else {
-            int status = treatOverflow(target);
+            int status = treatOverflow(target, point);
             return status;
         }
     }
 
     private RStarLeaf chooseSubtree(SpatialPoint newPoint) {
-        //TODO choosesubtree
         loadRoot();
-        return (RStarLeaf)root;
+        SpatialPoint[] temp = new SpatialPoint[1];
+        temp[0] = newPoint;
+        return _chooseSubtree(root, new HyperRectangle(dimension, temp));
     }
 
-    private int treatOverflow(RStarLeaf target) {
-        //TODO treatOverflow
-        levelReinserts = new ArrayList<Boolean>();
+    private RStarLeaf _chooseSubtree(RStarNode startNode, HyperRectangle newMbr) {
+        if(startNode.isLeaf()) {
+            return (RStarLeaf)startNode;
+        }
+
+        else {
+            ArrayList<Long> childPointers = startNode.childPointers;
+            assert childPointers.size() > 0;
+            ArrayList<RStarNode> children = new ArrayList<RStarNode>(childPointers.size());
+            //load all children
+            for (long childId : childPointers) {
+                children.add(loadNode(childId));
+            }
+
+            //check whether children are leaves
+            if (children.get(0).isLeaf()) {
+                //check for least overlap increment
+                ArrayList<Double> minOverlap = new ArrayList<Double>();
+                // the candidate nodes for next recursive step
+                ArrayList<RStarNode> cands = new ArrayList<RStarNode>();
+
+                for (RStarNode child : children) {
+                    HyperRectangle union = child.getMBR().union(newMbr);
+                    //find union's overlap with all other children
+                    double deltaOverlap = 0;
+
+                    for (RStarNode otherChild : children) {
+                        if (otherChild == child) {
+                            continue;
+                        }
+
+                        deltaOverlap += union.overlap(otherChild.getMBR()) -
+                                child.getMBR().overlap(otherChild.getMBR());
+
+                    }
+
+                    if (minOverlap.size() == 0) {
+                        cands.add(child);
+                        minOverlap.add(deltaOverlap);
+                    } else {
+                        if (minOverlap.get(0) > deltaOverlap) {
+                            minOverlap.removeAll(minOverlap);
+                            cands.removeAll(cands);
+                            minOverlap.add(deltaOverlap);
+                            cands.add(child);
+                        }
+                        else if (minOverlap.get(0) == deltaOverlap) {
+                            minOverlap.add(deltaOverlap);
+                            cands.add(child);
+                        }
+                    }
+                }
+
+                if(cands.size() == 1)
+                    return _chooseSubtree(cands.get(0), newMbr);
+                //break ties
+                else{
+                    ArrayList<Double> minAreas = new ArrayList<Double>();
+                    ArrayList<RStarNode> cands2 = new ArrayList<RStarNode>();
+
+                    double deltaV = 0;
+                    for (RStarNode candNode : cands) {
+                        deltaV = candNode.getMBR().deltaV_onInclusion(newMbr);
+                        if(minAreas.size() == 0 || minAreas.get(0) > deltaV) {
+                            minAreas.removeAll(minAreas);
+                            cands2.removeAll(cands2);
+                            minAreas.add(deltaV);
+                            cands2.add(candNode);
+                        }
+                        else if (minAreas.get(0) == deltaV) {
+                            minAreas.add(deltaV);
+                            cands2.add(candNode);
+                        }
+                    }
+
+                    if(cands2.size() == 1)
+                        return _chooseSubtree(cands2.get(0), newMbr);
+                    else {
+                        //again break ties
+                        double minArea = Double.MAX_VALUE;
+                        RStarNode candidate = null;
+                        for (RStarNode candNode : cands2) {
+                            double vol = candNode.getMBR().volume();
+                            if( vol < minArea ){
+                                minArea = vol;
+                                candidate = candNode;
+                            }
+                        }
+                        return _chooseSubtree(candidate, newMbr);
+                    }
+                }
+            } else {
+                //check for least volume increment
+                ArrayList<Double> minAreas = new ArrayList<Double>();
+                ArrayList<RStarNode> cands = new ArrayList<RStarNode>();
+
+                double deltaV = 0;
+                for (RStarNode candNode : children) {
+                    deltaV = candNode.getMBR().deltaV_onInclusion(newMbr);
+                    if(minAreas.size() == 0 || minAreas.get(0) > deltaV) {
+                        minAreas.removeAll(minAreas);
+                        cands.removeAll(cands);
+                        minAreas.add(deltaV);
+                        cands.add(candNode);
+                    }
+                    else if (minAreas.get(0) == deltaV) {
+                        minAreas.add(deltaV);
+                        cands.add(candNode);
+                    }
+                }
+
+                if(cands.size() == 1)
+                    return _chooseSubtree(cands.get(0), newMbr);
+                else {
+                    //again break ties
+                    double minArea = Double.MAX_VALUE;
+                    RStarNode candidate = null;
+                    for (RStarNode candNode : cands) {
+                        double vol = candNode.getMBR().volume();
+                        if( vol < minArea ){
+                            minArea = vol;
+                            candidate = candNode;
+                        }
+                    }
+                    return _chooseSubtree(candidate, newMbr);
+                }
+            }
+        }
+    }
+
+    private int treatOverflow(RStarLeaf target, SpatialPoint point) {
+        //TODO forced reinserts
+        split(target, point);
         return 1;
+    }
+
+    private void split(RStarLeaf target, SpatialPoint point) {
+        //load all children of target
+        ArrayList<Long> childPointers = target.childPointers;
+        assert childPointers.size() > 0;
+        ArrayList<SpatialPoint> children = new ArrayList<SpatialPoint>(childPointers.size());
+        //load all children
+        for (long childId : childPointers) {
+            PointDTO dto = storage.loadPoint(childId);
+            children.add(new SpatialPoint(dto));
+        }
+
+        children.add(point);
+        int splitAxis = chooseSplitAxis(children);
+        int bestSortOrder = -1;
+        int splitPoint = chooseSplitPoint(children, splitAxis, bestSortOrder);
+
+        // update target and its parent
+    }
+
+    /**
+     * computes the split axis for the given list of entries
+     * @param entries the points to be split
+     * @return the index of the dimension perpendicular to which splitting
+     * should be done
+     */
+    private int chooseSplitAxis(ArrayList<SpatialPoint> entries) {
+        int splitAxis = 0;
+        ArrayList<SpatialPoint> maxSorting = (ArrayList<SpatialPoint>) entries.clone();
+        ArrayList<SpatialPoint> minSorting = (ArrayList<SpatialPoint>) entries.clone();
+
+        // best value for total margin
+        double minMargin = Double.MAX_VALUE;
+
+        for (int i = 1; i <= dimension; i++) {
+            double margin = 0.0;
+            // sort the entries according to their minimal and according to their maximal value
+            final SpatialComparator compMin = new SpatialComparator(i, HyperRectangle.MIN_CORD);
+            Collections.sort(minSorting, compMin);
+            final SpatialComparator compMax = new SpatialComparator(i, HyperRectangle.MAX_CORD);
+            Collections.sort(maxSorting, compMax);
+
+            for (int k = 0; k <= (entries.size() - 2 * Constants.MIN_CHILDREN); k++) {
+                HyperRectangle mbr1 = new HyperRectangle(dimension,
+                        (SpatialPoint[]) minSorting.subList(0, Constants.MIN_CHILDREN + k).toArray());
+                HyperRectangle mbr2 = new HyperRectangle(dimension,
+                        (SpatialPoint[]) minSorting.subList(Constants.MIN_CHILDREN + k, entries.size()).toArray());
+
+                margin += mbr1.margin() + mbr2.margin();
+
+                mbr1 = new HyperRectangle(dimension,
+                        (SpatialPoint[]) maxSorting.subList(0, Constants.MIN_CHILDREN + k).toArray());
+                mbr2 = new HyperRectangle(dimension,
+                        (SpatialPoint[]) maxSorting.subList(Constants.MIN_CHILDREN + k, entries.size()).toArray());
+                margin += mbr1.margin() + mbr2.margin();
+            }
+
+            if (margin < minMargin) {
+                splitAxis = i;
+                minMargin = margin;
+            }
+        }
+        return splitAxis;
+    }
+
+    /**
+     * computes the split point for the given list of entries
+     * @param entries the points to be split
+     * @param bestSort it sets bestSort to 0 or 1 depending upon
+     *                 whether splitting should be done according to
+     *                 maximal or minimal value for the given splitAxis
+     * @return the split point
+     */
+    private int chooseSplitPoint(ArrayList<SpatialPoint> entries, int splitAxis, int bestSort)
+    {
+        int splitPoint = 0;
+        // numEntries
+        int numEntries = entries.size();
+
+        ArrayList<SpatialPoint> maxSorting = (ArrayList<SpatialPoint>) entries.clone();
+        ArrayList<SpatialPoint> minSorting = (ArrayList<SpatialPoint>) entries.clone();
+
+        // sort upper and lower in the right dimesnion
+        final SpatialComparator compMin = new SpatialComparator(splitAxis, HyperRectangle.MIN_CORD);
+        Collections.sort(minSorting, compMin);
+        final SpatialComparator compMax = new SpatialComparator(splitAxis, HyperRectangle.MAX_CORD);
+        Collections.sort(maxSorting, compMax);
+
+        // the split point (first set to minimum entries in the node)
+        splitPoint = Constants.MIN_CHILDREN;
+        // best value for the overlap
+        double minOverlap = Double.MAX_VALUE;
+        // the volume of mbr1 and mbr2
+        double volume = 0.0;
+        int minEntries = Constants.MIN_CHILDREN;
+
+        bestSort = -1;
+
+        for (int i = 0; i <= numEntries - 2 * minEntries; i++) {
+            // test the sorting with respect to the minimal values
+            HyperRectangle mbr1 = new HyperRectangle(dimension,
+                    (SpatialPoint[]) minSorting.subList(0, minEntries + i).toArray());
+            HyperRectangle mbr2 = new HyperRectangle(dimension,
+                    (SpatialPoint[]) minSorting.subList(minEntries + i, entries.size()).toArray());
+
+            double currentOverlap = mbr1.overlap(mbr2);
+            if (currentOverlap < minOverlap || (currentOverlap == minOverlap && (mbr1.volume() + mbr2.volume()) < volume)) {
+                minOverlap = currentOverlap;
+                splitPoint = minEntries + i;
+                bestSort = HyperRectangle.MIN_CORD;
+                volume = mbr1.volume() + mbr2.volume();
+            }
+            // test the sorting with respect to the maximal values
+            mbr1 = new HyperRectangle(dimension,
+                    (SpatialPoint[]) maxSorting.subList(0, minEntries + i).toArray());
+            mbr2 = new HyperRectangle(dimension,
+                    (SpatialPoint[]) maxSorting.subList(minEntries + i, entries.size()).toArray());
+
+            currentOverlap = mbr1.overlap(mbr2);
+            if (currentOverlap < minOverlap || (currentOverlap == minOverlap && (mbr1.volume() + mbr2.volume()) < volume)) {
+                minOverlap = currentOverlap;
+                splitPoint = minEntries + i;
+                bestSort = HyperRectangle.MAX_CORD;
+                volume = mbr1.volume() + mbr2.volume();
+            }
+        }
+        return splitPoint;
     }
 
     /**
@@ -318,18 +576,6 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
     @Override
     public TreeDTO toDTO() {
         return new TreeDTO(dimension, Constants.PAGESIZE, rootPointer);
-    }
-
-    private void createDataDir() {
-        // check for the node-data directory. create one if doesn't exist
-        File dataDir = new File(saveFile.getParentFile(), Constants.TREE_DATA_DIRECTORY);
-        if (!dataDir.exists() || !dataDir.isDirectory()) {
-            if (!dataDir.mkdir()) {
-                System.err.println("Failed to create data directory of the tree. Exiting..");
-                System.exit(1);
-            }
-            System.out.println("Data directory created");
-        }
     }
 
     private void loadTree() {

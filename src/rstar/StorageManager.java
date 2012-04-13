@@ -234,4 +234,16 @@ public class StorageManager implements IDiskQuery {
             }
         });
     }
+
+    public void createDataDir(File saveFile) {
+        // check for the node-data directory. create one if doesn't exist
+        File dataDir = new File(saveFile.getParentFile(), Constants.TREE_DATA_DIRECTORY);
+        if (!dataDir.exists() || !dataDir.isDirectory()) {
+            if (!dataDir.mkdir()) {
+                System.err.println("Failed to create data directory of the tree. Exiting..");
+                System.exit(1);
+            }
+            System.out.println("Data directory created");
+        }
+    }
 }

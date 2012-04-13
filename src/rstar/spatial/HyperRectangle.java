@@ -17,8 +17,8 @@ public class HyperRectangle implements IDtoConvertible {
      * in the rectangle.
      */
     private float[][] points;
-    private static int MAX_CORD = 0;
-    private static int MIN_CORD = 1;
+    public static final int MAX_CORD = 0;
+    public static final int MIN_CORD = 1;
 
     public float[][] getPoints() {
         return points;
@@ -138,16 +138,16 @@ public class HyperRectangle implements IDtoConvertible {
     }
 
     /**
-     * Computes the perimeter of this MBR.
+     * Computes the margin of this MBR.
      *
-     * @return the perimeter of this MBR
+     * @return the margin of this MBR
      */
-    public double perimeter() {
-        double perimeter = 0;
+    public double margin() {
+        double margin = 0;
         for (int i = 0; i < points.length; i++) {
-            perimeter += points[i][MAX_CORD] - points[i][MIN_CORD];
+            margin += points[i][MAX_CORD] - points[i][MIN_CORD];
         }
-        return perimeter;
+        return margin;
     }
 
     /**
@@ -158,33 +158,12 @@ public class HyperRectangle implements IDtoConvertible {
      * @return the relation between the volume of the overlapping box and the volume of this MBR
      *         and the given MBR
      */
-    public double overlapVolume(HyperRectangle mbr) {
-        if (this._dimension != mbr._dimension)
-            throw new IllegalArgumentException("This MBR and the given MBR need same dimensionality");
-
-        float[][] otherPoints = mbr.getPoints();
-        // the maximal and minimal value of the overlap box.
-        float omax, omin;
-
-        // the overlap volume
-        double overlap = 1.0;
-
-        for (int i = 0; i < points.length; i++) {
-            // The maximal value of that overlap box in the current
-            // dimension is the minimum of the max values.
-            omax = Math.min(points[i][MAX_CORD], otherPoints[i][MAX_CORD]);
-            // The minimal value is the maximum of the min values.
-            omin = Math.max(points[i][MIN_CORD], otherPoints[i][MIN_CORD]);
-
-            // if omax <= omin in any dimension, the overlap box has a volume of zero
-            if (omax <= omin) {
-                return 0.0;
-            }
-
-            overlap *= omax - omin;
+    public double overlap(HyperRectangle mbr) {
+        HyperRectangle intersect = this.getIntersection(mbr);
+        if (intersect == null) {
+            return 0;
         }
-
-        return overlap;
+        return intersect.volume();
     }
 
     /**

@@ -1,5 +1,6 @@
 package rstar.spatial;
 
+import rstar.RStarNode;
 import rstar.dto.MbrDTO;
 import rstar.interfaces.IDtoConvertible;
 import util.Constants;
@@ -40,6 +41,13 @@ public class HyperRectangle implements IDtoConvertible {
         update(points);
     }
 
+    public HyperRectangle(int dimension, RStarNode[] nodes) {
+        this._dimension = dimension;
+        this.points = new float[dimension][2];
+
+        update(nodes);
+    }
+
     public HyperRectangle(MbrDTO dto) {
         this._dimension = Constants.DIMENSION;
         this.points = dto.points;
@@ -52,6 +60,12 @@ public class HyperRectangle implements IDtoConvertible {
             points[i][MAX_CORD] = cords[i];
             points[i][MIN_CORD] = cords[i];
         }
+    }
+
+    public void update(SpatialPoint newPoint) {
+        SpatialPoint[] newPoints = new SpatialPoint[1];
+        newPoints[0] = newPoint;
+        update(newPoints);
     }
 
     private void update(SpatialPoint[] newPoints) {
@@ -69,10 +83,10 @@ public class HyperRectangle implements IDtoConvertible {
         }
     }
 
-    public void update(SpatialPoint newPoint) {
-        SpatialPoint[] newPoints = new SpatialPoint[1];
-        newPoints[0] = newPoint;
-        update(newPoints);
+    private void update(RStarNode[] nodes) {
+        for (RStarNode node : nodes) {
+            update(node.getMBR());
+        }
     }
 
     public void update(HyperRectangle addedRegion) {

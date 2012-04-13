@@ -1,6 +1,5 @@
 package rstar;
 
-import rstar.dto.NodeDTO;
 import rstar.interfaces.IDtoConvertible;
 import rstar.interfaces.IRStarNode;
 import rstar.spatial.HyperRectangle;
@@ -14,7 +13,14 @@ public abstract class RStarNode implements IDtoConvertible, IRStarNode{
     protected HyperRectangle mbr;
     public ArrayList<Long> childPointers;   //ids of all children = file names are derivable from this.
 
-    public RStarNode() {
+    private Long parentId;
+
+    public Long getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(Long parentId) {
+        this.parentId = parentId;
     }
 
     @Override

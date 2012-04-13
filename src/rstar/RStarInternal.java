@@ -14,17 +14,18 @@ import java.util.ArrayList;
  * Time: 2:55 AM
  */
 public class RStarInternal extends RStarNode {
-    private transient ArrayList<IRStarNode> children;
+    private transient ArrayList<RStarNode> children;
 
     public RStarInternal(int dimension) {
         _dimension = dimension;
-        children = new ArrayList<IRStarNode>(Constants.MAX_CHILDREN);
+        children = new ArrayList<RStarNode>(Constants.MAX_CHILDREN);
         childPointers = new ArrayList<Long>(Constants.MAX_CHILDREN);
         mbr = new HyperRectangle(dimension);
     }
 
     public RStarInternal(NodeDTO dto, long nodeId) {
         this.nodeId = nodeId;
+        this.setParentId(dto.parentId);
         this.childPointers = dto.children;
         this.mbr = new HyperRectangle(dto.mbr);
     }
@@ -41,9 +42,10 @@ public class RStarInternal extends RStarNode {
 
     @Override
     public <T> int insert(T newChild) {
-        if (this.isNotFull() && newChild instanceof IRStarNode) {
-            children.add((IRStarNode)newChild);
-            mbr.update(((IRStarNode) newChild).getMBR());
+        if (this.isNotFull() && newChild instanceof RStarNode) {
+            ((RStarNode) newChild).setParentId(this.nodeId);
+            childPointers.add(((RStarNode) newChild).getNodeId());
+            mbr.update(((RStarNode) newChild).getMBR());
             return 1;
         }
         else return -1;
@@ -62,6 +64,6 @@ public class RStarInternal extends RStarNode {
 
     @Override
     public NodeDTO toDTO() {
-        return new NodeDTO(childPointers, mbr.toDTO(), false);
+        return new NodeDTO(getParentId(), false, mbr.toDTO(), childPointers);
     }
 }

@@ -25,6 +25,7 @@ public class RStarLeaf extends RStarNode {
 
     public RStarLeaf(NodeDTO dto, long nodeId) {
         this.nodeId = nodeId;
+        this.setParentId(dto.parentId);
         _dimension = Constants.DIMENSION;
         childPointers = dto.children;
         loadedChildren = new ArrayList<SpatialPoint>();
@@ -58,7 +59,7 @@ public class RStarLeaf extends RStarNode {
 
     @Override
     public NodeDTO toDTO() {
-        return new NodeDTO(childPointers, mbr.toDTO(), true);
+        return new NodeDTO(getParentId(), true, mbr.toDTO(), childPointers);
     }
 
     public boolean hasUnsavedPoints(){

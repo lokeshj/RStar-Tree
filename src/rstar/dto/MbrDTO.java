@@ -1,7 +1,5 @@
 package rstar.dto;
 
-import util.Constants;
-
 /**
  * User: Lokesh
  * Date: 4/4/12

@@ -1,7 +1,6 @@
 package util;
 
 import java.util.List;
-import java.util.Random;
 
 /**
  * User: Lokesh
@@ -9,7 +8,7 @@ import java.util.Random;
  * Time: 10:00 PM
  */
 public class Utils {
-    private static Random random;
+    private static long idSeed = 1;
 
     public static float getMedian(List<Long> list) {
         int size = list.size();
@@ -19,11 +18,7 @@ public class Utils {
             return list.get((size+1)/2);
     }
 
-    public static int getRandomId() {
-        if (random == null) {
-            random = new Random();
-        }
-
-        return random.nextInt();
+    public static synchronized long getRandomId() {
+        return idSeed++;
     }
 }

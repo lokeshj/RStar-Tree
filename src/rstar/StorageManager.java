@@ -151,11 +151,10 @@ public class StorageManager implements IDiskQuery {
 
             return result;
         } catch (IOException e) {
-            System.err.println("Exception occurred while loading node from disk");
+            System.err.println(e.getMessage());
         } catch (ClassNotFoundException e) {
-            System.err.println("Exception occurred while loading node from disk");
+            System.err.println("ClassNotFoundException occurred while loading node from disk");
         }
-
         return null;
     }
 

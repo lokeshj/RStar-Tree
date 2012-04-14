@@ -5,6 +5,9 @@ import rstar.dto.MbrDTO;
 import rstar.interfaces.IDtoConvertible;
 import util.Constants;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * User: Lokesh
  * Date: 3/4/12
@@ -41,6 +44,16 @@ public class HyperRectangle implements IDtoConvertible {
         update(points);
     }
 
+    public <T> HyperRectangle(int dimension, List<T> points) {
+        this._dimension = dimension;
+        this.points = new float[dimension][2];
+        update(points);
+        /*if (points.get(0) instanceof RStarNode)
+            update(List<RStarNode> points);
+        else
+            update((List<SpatialPoint>) points);*/
+    }
+
     public HyperRectangle(int dimension, RStarNode[] nodes) {
         this._dimension = dimension;
         this.points = new float[dimension][2];
@@ -73,13 +86,34 @@ public class HyperRectangle implements IDtoConvertible {
             float[] cord = newPoints[j].getCords();
             assert cord.length == _dimension;
             for (int i = 0; i < cord.length; i++) {
-                if (points[i][MAX_CORD] < cord[i]) {
+                if (points[i][MAX_CORD] == 0 || points[i][MAX_CORD] < cord[i]) {
                     points[i][MAX_CORD] = cord[i];
                 }
-                if (points[i][MIN_CORD] > cord[i]) {
+                if (points[i][MIN_CORD] == 0 || points[i][MIN_CORD] > cord[i]) {
                     points[i][MIN_CORD] = cord[i];
                 }
             }
+        }
+    }
+
+    private <T> void update(List<T> newPoints) {
+        if (newPoints.get(0) instanceof SpatialPoint) {
+            for (int j = 0; j < newPoints.size(); j++) {
+                float[] cord = ((SpatialPoint)newPoints.get(j)).getCords();
+                assert cord.length == _dimension;
+                for (int i = 0; i < cord.length; i++) {
+                    if (points[i][MAX_CORD] == 0 || points[i][MAX_CORD] < cord[i]) {
+                        points[i][MAX_CORD] = cord[i];
+                    }
+                    if (points[i][MIN_CORD] == 0 || points[i][MIN_CORD] > cord[i]) {
+                        points[i][MIN_CORD] = cord[i];
+                    }
+                }
+            }
+        } else if (newPoints.get(0) instanceof RStarNode) {
+            for (T node : newPoints) {
+            update(((RStarNode)node).getMBR());
+        }
         }
     }
 
@@ -88,6 +122,12 @@ public class HyperRectangle implements IDtoConvertible {
             update(node.getMBR());
         }
     }
+
+//    private void update(List<RStarNode> nodes) {
+//        for (RStarNode node : nodes) {
+//            update(node.getMBR());
+//        }
+//    }
 
     public void update(HyperRectangle addedRegion) {
         float[][] newPoints = addedRegion.getPoints();

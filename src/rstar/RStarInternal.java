@@ -17,8 +17,8 @@ public class RStarInternal extends RStarNode {
     private transient ArrayList<RStarNode> children;
 
     public RStarInternal(int dimension) {
+        createId();
         _dimension = dimension;
-        children = new ArrayList<RStarNode>(Constants.MAX_CHILDREN);
         childPointers = new ArrayList<Long>(Constants.MAX_CHILDREN);
         mbr = new HyperRectangle(dimension);
     }
@@ -27,6 +27,7 @@ public class RStarInternal extends RStarNode {
         this.nodeId = nodeId;
         this.setParentId(dto.parentId);
         this.childPointers = dto.children;
+        children = new ArrayList<RStarNode>(Constants.MAX_CHILDREN);
         this.mbr = new HyperRectangle(dto.mbr);
     }
 
@@ -37,7 +38,7 @@ public class RStarInternal extends RStarNode {
 
     @Override
     public boolean isNotFull() {
-        return children.size() < Constants.MAX_CHILDREN;
+        return childPointers.size() < Constants.MAX_CHILDREN;
     }
 
     @Override

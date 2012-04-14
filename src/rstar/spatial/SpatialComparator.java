@@ -1,6 +1,7 @@
 package rstar.spatial;
 
 import rstar.RStarNode;
+import util.Constants;
 
 import java.util.Comparator;
 
@@ -44,9 +45,9 @@ public class SpatialComparator implements Comparator {
         if (o1 instanceof SpatialPoint) {
             SpatialPoint[] temp = new SpatialPoint[1];
             temp[0] = (SpatialPoint) o1;
-            mbr1 = new HyperRectangle(dimension, temp);
+            mbr1 = new HyperRectangle(Constants.DIMENSION, temp);
             temp[0] = (SpatialPoint)o2;
-            mbr2 = new HyperRectangle(dimension, temp);
+            mbr2 = new HyperRectangle(Constants.DIMENSION, temp);
         }
         else if (o1 instanceof RStarNode) {
              mbr1 = ((RStarNode)o1).getMBR();
@@ -56,7 +57,7 @@ public class SpatialComparator implements Comparator {
             mbr2 = (HyperRectangle) o2;
         }
 
-        int answer = 1;
+        int answer = 0;
         if (mbr1.getPoints()[dimension][order] < mbr2.getPoints()[dimension][order])
             answer = -1;
 

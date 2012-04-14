@@ -19,10 +19,6 @@ public abstract class RStarNode implements IDtoConvertible, IRStarNode{
         return parentId;
     }
 
-    public void setParentId(Long parentId) {
-        this.parentId = parentId;
-    }
-
     @Override
     public void createId() {
         if (nodeId == -1) {
@@ -30,6 +26,10 @@ public abstract class RStarNode implements IDtoConvertible, IRStarNode{
             if(nodeId < 0)
                 nodeId = -1 * nodeId;
         }
+    }
+
+    public void setParentId(Long parentId) {
+        this.parentId = parentId;
     }
 
     @Override

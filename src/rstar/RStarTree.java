@@ -11,10 +11,7 @@ import util.Constants;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: Lokesh
@@ -33,6 +30,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
     private float _pointSearchResult = -1;
     private ArrayList<SpatialPoint> _rangeSearchResult;
+    private int bestSortOrder = -1;
 
     public RStarTree() {
         init(Constants.TREE_FILE, Constants.DIMENSION, Constants.PAGESIZE);
@@ -74,6 +72,8 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         //TODO add cost for mbr
         Constants.MAX_CHILDREN = Constants.PAGESIZE/8;          // M = (pagesize - mbr_size)/ (size of Long = 8)
         Constants.MIN_CHILDREN = Constants.MAX_CHILDREN/3;      // m = M/3
+//        Constants.MAX_CHILDREN = 5;
+//        Constants.MIN_CHILDREN = 2;
     }
 
     /* QUERY FUNCTIONS */
@@ -103,7 +103,6 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
     private int insert(Long nodePointer, RStarNode newChild) {
         storage.saveNode(newChild);
-
         RStarInternal node = (RStarInternal) loadNode(nodePointer);
         if (node.isNotFull()) {
             int status = node.insert(newChild);
@@ -118,6 +117,12 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         }
     }
 
+    /**
+     * finds the most appropriate leaf node to
+     * insert the newPoint into
+     * @param newPoint
+     * @return RStarLeaf
+     */
     private RStarLeaf chooseSubtree(SpatialPoint newPoint) {
         loadRoot();
         SpatialPoint[] temp = new SpatialPoint[1];
@@ -289,7 +294,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
             throw new AssertionError();
         }
 
-        final ArrayList<SpatialPoint> children = new ArrayList<SpatialPoint>(childPointers.size());
+        ArrayList<SpatialPoint> children = new ArrayList<SpatialPoint>(childPointers.size());
         //load all children
         for (long childId : childPointers) {
             PointDTO dto = storage.loadPoint(childId);
@@ -298,19 +303,18 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
         children.add(newPoint);
         int splitAxis = chooseLeafSplitAxis(children);
-        int bestSortOrder = -1;
-        int splitPoint = chooseLeafSplitpoint(children, splitAxis, bestSortOrder);
+        int splitPoint = chooseLeafSplitpoint(children, splitAxis);
 
-        ArrayList<SpatialPoint> sorting = (ArrayList<SpatialPoint>) children.clone();
+        Object[] sorting = children.toArray();
         final SpatialComparator comp = new SpatialComparator(splitAxis, bestSortOrder);
-        Collections.sort(sorting, comp);
+        Arrays.sort(sorting, comp);
 
         splittingLeaf.loadedChildren = new ArrayList<SpatialPoint>();
         splittingLeaf.childPointers = new ArrayList<Long>();
         RStarLeaf newChild = new RStarLeaf(dimension);
 
-        for (int i = 0; i < sorting.size(); i++) {
-            SpatialPoint spatialPoint = sorting.get(i);
+        for (int i = 0; i < sorting.length; i++) {
+            SpatialPoint spatialPoint = (SpatialPoint) sorting[i];
             if (i < splitPoint) {
                 if (spatialPoint == newPoint) {
                     splittingLeaf.loadedChildren.add(spatialPoint);
@@ -329,8 +333,10 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         if (splittingLeaf.getNodeId() == rootPointer) {
             //we just split root
             splitRoot(newChild);
-        }else
+        }else {
+            newChild.setParentId(splittingLeaf.getParentId());
             insert(splittingLeaf.getParentId(), newChild);
+        }
     }
 
     private void splitInternalNode(RStarInternal splittingNode, RStarNode newChild) {
@@ -340,7 +346,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
             throw new AssertionError();
         }
 
-        final ArrayList<RStarNode> children = new ArrayList<RStarNode>(childPointers.size());
+         ArrayList<RStarNode> children = new ArrayList<RStarNode>(childPointers.size());
         //load all children
         for (long childNodeId : childPointers) {
             children.add(loadNode(childNodeId));
@@ -348,18 +354,17 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
         children.add(newChild);
         int splitAxis = chooseInternalSplitAxis(children);
-        int bestSortOrder = -1;
-        int splitPoint = chooseInternalSplitpoint(children, splitAxis, bestSortOrder);
+        int splitPoint = chooseInternalSplitpoint(children, splitAxis);
 
-        ArrayList<RStarNode> sorting = (ArrayList<RStarNode>) children.clone();
+        Object[] sorting = children.toArray();
         final SpatialComparator comp = new SpatialComparator(splitAxis, bestSortOrder);
-        Collections.sort(sorting, comp);
+        Arrays.sort(sorting, comp);
 
         splittingNode.childPointers = new ArrayList<Long>();
         RStarInternal newNode = new RStarInternal(dimension);
 
-        for (int i = 0; i < sorting.size(); i++) {
-            RStarNode node = sorting.get(i);
+        for (int i = 0; i < sorting.length; i++) {
+            RStarNode node = (RStarNode) sorting[i];
             if (i < splitPoint) {
                 splittingNode.childPointers.add(node.getNodeId());
             } else {
@@ -371,18 +376,22 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         if (splittingNode.getNodeId() == rootPointer) {
             //we just split root
             splitRoot(newChild);
-        }else
-            insert(splittingNode.getParentId(), newNode);
+        } else {
+            newChild.setParentId(splittingNode.getParentId());
+            insert(splittingNode.getParentId(), newChild);
+        }
     }
 
     private void splitRoot(RStarNode newChild) {
-        storage.saveNode(newChild);
         RStarInternal newRoot = new RStarInternal(dimension);
+        newRoot.setParentId(newRoot.getNodeId());
         newRoot.insert(root);
         newRoot.insert(newChild);
+        storage.saveNode(root);
+        storage.saveNode(newChild);
+        storage.saveNode(newRoot);
         root = newRoot;
         rootPointer = newRoot.getNodeId();
-        storage.saveNode(newRoot);
     }
 
     /**
@@ -399,7 +408,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         // best value for total margin
         double minMargin = Double.MAX_VALUE;
 
-        for (int i = 1; i <= dimension; i++) {
+        for (int i = 0; i < dimension; i++) {
             double margin = 0.0;
             // sort the entries according to their minimal and according to their maximal value
             final SpatialComparator compMin = new SpatialComparator(i, HyperRectangle.MIN_CORD);
@@ -408,17 +417,13 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
             Collections.sort(maxSorting, compMax);
 
             for (int k = 0; k <= (entries.size() - 2 * Constants.MIN_CHILDREN); k++) {
-                HyperRectangle mbr1 = new HyperRectangle(dimension,
-                        (SpatialPoint[]) minSorting.subList(0, Constants.MIN_CHILDREN + k).toArray());
-                HyperRectangle mbr2 = new HyperRectangle(dimension,
-                        (SpatialPoint[]) minSorting.subList(Constants.MIN_CHILDREN + k, entries.size()).toArray());
+                HyperRectangle mbr1 = new HyperRectangle(dimension, minSorting.subList(0, Constants.MIN_CHILDREN + k));
+                HyperRectangle mbr2 = new HyperRectangle(dimension, minSorting.subList(Constants.MIN_CHILDREN + k, entries.size()));
 
                 margin += mbr1.margin() + mbr2.margin();
 
-                mbr1 = new HyperRectangle(dimension,
-                        (SpatialPoint[]) maxSorting.subList(0, Constants.MIN_CHILDREN + k).toArray());
-                mbr2 = new HyperRectangle(dimension,
-                        (SpatialPoint[]) maxSorting.subList(Constants.MIN_CHILDREN + k, entries.size()).toArray());
+                mbr1 = new HyperRectangle(dimension, maxSorting.subList(0, Constants.MIN_CHILDREN + k));
+                mbr2 = new HyperRectangle(dimension, maxSorting.subList(Constants.MIN_CHILDREN + k, entries.size()));
                 margin += mbr1.margin() + mbr2.margin();
             }
 
@@ -438,7 +443,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         // best value for total margin
         double minMargin = Double.MAX_VALUE;
 
-        for (int i = 1; i <= dimension; i++) {
+        for (int i = 0; i < dimension; i++) {
             double margin = 0.0;
             // sort the entries according to their minimal and according to their maximal value
             final SpatialComparator compMin = new SpatialComparator(i, HyperRectangle.MIN_CORD);
@@ -447,17 +452,13 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
             Collections.sort(maxSorting, compMax);
 
             for (int k = 0; k <= (children.size() - 2 * Constants.MIN_CHILDREN); k++) {
-                HyperRectangle mbr1 = new HyperRectangle(dimension,
-                        (RStarNode[]) minSorting.subList(0, Constants.MIN_CHILDREN + k).toArray());
-                HyperRectangle mbr2 = new HyperRectangle(dimension,
-                        (RStarNode[]) minSorting.subList(Constants.MIN_CHILDREN + k, children.size()).toArray());
+                HyperRectangle mbr1 = new HyperRectangle(dimension, minSorting.subList(0, Constants.MIN_CHILDREN + k));
+                HyperRectangle mbr2 = new HyperRectangle(dimension, minSorting.subList(Constants.MIN_CHILDREN + k, children.size()));
 
                 margin += mbr1.margin() + mbr2.margin();
 
-                mbr1 = new HyperRectangle(dimension,
-                        (SpatialPoint[]) maxSorting.subList(0, Constants.MIN_CHILDREN + k).toArray());
-                mbr2 = new HyperRectangle(dimension,
-                        (SpatialPoint[]) maxSorting.subList(Constants.MIN_CHILDREN + k, children.size()).toArray());
+                mbr1 = new HyperRectangle(dimension, maxSorting.subList(0, Constants.MIN_CHILDREN + k));
+                mbr2 = new HyperRectangle(dimension, maxSorting.subList(Constants.MIN_CHILDREN + k, children.size()));
                 margin += mbr1.margin() + mbr2.margin();
             }
 
@@ -471,13 +472,12 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
     /**
      * computes the split point for the given list of entries
+     * it sets bestSort to 0 or 1 depending upon whether splitting should be done
+     * according to maximal or minimal value for the given splitAxis
      * @param entries the points to be split
-     * @param bestSort it sets bestSort to 0 or 1 depending upon
-     *                 whether splitting should be done according to
-     *                 maximal or minimal value for the given splitAxis
      * @return the split point
      */
-    private int chooseLeafSplitpoint(final ArrayList<SpatialPoint> entries, final int splitAxis, int bestSort)
+    private int chooseLeafSplitpoint(final ArrayList<SpatialPoint> entries, final int splitAxis)
     {
         int splitPoint = 0;
         // numEntries
@@ -500,40 +500,36 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         double volume = 0.0;
         int minEntries = Constants.MIN_CHILDREN;
 
-        bestSort = -1;
+        bestSortOrder = -1;
 
         for (int i = 0; i <= numEntries - 2 * minEntries; i++) {
             // test the sorting with respect to the minimal values
-            HyperRectangle mbr1 = new HyperRectangle(dimension,
-                    (SpatialPoint[]) minSorting.subList(0, minEntries + i).toArray());
-            HyperRectangle mbr2 = new HyperRectangle(dimension,
-                    (SpatialPoint[]) minSorting.subList(minEntries + i, entries.size()).toArray());
+            HyperRectangle mbr1 = new HyperRectangle(dimension, minSorting.subList(0, minEntries + i));
+            HyperRectangle mbr2 = new HyperRectangle(dimension, minSorting.subList(minEntries + i, entries.size()));
 
             double currentOverlap = mbr1.overlap(mbr2);
             if (currentOverlap < minOverlap || (currentOverlap == minOverlap && (mbr1.volume() + mbr2.volume()) < volume)) {
                 minOverlap = currentOverlap;
                 splitPoint = minEntries + i;
-                bestSort = HyperRectangle.MIN_CORD;
+                bestSortOrder = HyperRectangle.MIN_CORD;
                 volume = mbr1.volume() + mbr2.volume();
             }
             // test the sorting with respect to the maximal values
-            mbr1 = new HyperRectangle(dimension,
-                    (SpatialPoint[]) maxSorting.subList(0, minEntries + i).toArray());
-            mbr2 = new HyperRectangle(dimension,
-                    (SpatialPoint[]) maxSorting.subList(minEntries + i, entries.size()).toArray());
+            mbr1 = new HyperRectangle(dimension, maxSorting.subList(0, minEntries + i));
+            mbr2 = new HyperRectangle(dimension, maxSorting.subList(minEntries + i, entries.size()));
 
             currentOverlap = mbr1.overlap(mbr2);
             if (currentOverlap < minOverlap || (currentOverlap == minOverlap && (mbr1.volume() + mbr2.volume()) < volume)) {
                 minOverlap = currentOverlap;
                 splitPoint = minEntries + i;
-                bestSort = HyperRectangle.MAX_CORD;
+                bestSortOrder = HyperRectangle.MAX_CORD;
                 volume = mbr1.volume() + mbr2.volume();
             }
         }
         return splitPoint;
     }
 
-    private int chooseInternalSplitpoint(ArrayList<RStarNode> children, int splitAxis, int bestSort) {
+    private int chooseInternalSplitpoint(ArrayList<RStarNode> children, int splitAxis) {
         int splitPoint = 0;
         // numEntries
         int numEntries = children.size();
@@ -555,33 +551,29 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         double volume = 0.0;
         int minEntries = Constants.MIN_CHILDREN;
 
-        bestSort = -1;
+        bestSortOrder = -1;
 
         for (int i = 0; i <= numEntries - 2 * minEntries; i++) {
             // test the sorting with respect to the minimal values
-            HyperRectangle mbr1 = new HyperRectangle(dimension,
-                    (RStarNode[]) minSorting.subList(0, minEntries + i).toArray());
-            HyperRectangle mbr2 = new HyperRectangle(dimension,
-                    (RStarNode[]) minSorting.subList(minEntries + i, children.size()).toArray());
+            HyperRectangle mbr1 = new HyperRectangle(dimension, minSorting.subList(0, minEntries + i));
+            HyperRectangle mbr2 = new HyperRectangle(dimension, minSorting.subList(minEntries + i, children.size()));
 
             double currentOverlap = mbr1.overlap(mbr2);
             if (currentOverlap < minOverlap || (currentOverlap == minOverlap && (mbr1.volume() + mbr2.volume()) < volume)) {
                 minOverlap = currentOverlap;
                 splitPoint = minEntries + i;
-                bestSort = HyperRectangle.MIN_CORD;
+                bestSortOrder = HyperRectangle.MIN_CORD;
                 volume = mbr1.volume() + mbr2.volume();
             }
             // test the sorting with respect to the maximal values
-            mbr1 = new HyperRectangle(dimension,
-                    (SpatialPoint[]) maxSorting.subList(0, minEntries + i).toArray());
-            mbr2 = new HyperRectangle(dimension,
-                    (SpatialPoint[]) maxSorting.subList(minEntries + i, children.size()).toArray());
+            mbr1 = new HyperRectangle(dimension, maxSorting.subList(0, minEntries + i));
+            mbr2 = new HyperRectangle(dimension, maxSorting.subList(minEntries + i, children.size()));
 
             currentOverlap = mbr1.overlap(mbr2);
             if (currentOverlap < minOverlap || (currentOverlap == minOverlap && (mbr1.volume() + mbr2.volume()) < volume)) {
                 minOverlap = currentOverlap;
                 splitPoint = minEntries + i;
-                bestSort = HyperRectangle.MAX_CORD;
+                bestSortOrder = HyperRectangle.MAX_CORD;
                 volume = mbr1.volume() + mbr2.volume();
             }
         }

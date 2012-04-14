@@ -96,11 +96,13 @@ public class Q1 {
                         break;
 
                     } catch (Exception e) {
-                        logger.traceError("Error while parsing line " + lineNum + ". Skipped Insertion");
+                        logger.traceError("Exception while processing line " + lineNum +
+                                ". Skipped Insertion. message: "+e.getMessage());
                         break;
                     }
                     catch (AssertionError error){
-                        logger.traceError("Error while parsing line " + lineNum + ".(Invalid Dimensionality) Skipped Insertion");
+                        logger.traceError("Exception while processing line " + lineNum +
+                                ".Skipped Insertion. message: "+ error.getMessage());
                         break;
                     }
                 }
@@ -120,10 +122,12 @@ public class Q1 {
                         logger.trace("search result: " + oid);
                         this.updateTimeTaken(opType, (end - start));
                     } catch (Exception e) {
-                        logger.traceError("Error while parsing line " + lineNum + ". Skipped Point search");
+                        logger.traceError("Exception while processing line " + lineNum +
+                                ". Skipped Point Search. message: "+e.getMessage());
                     }
                     catch (AssertionError error){
-                        logger.traceError("Error while parsing line " + lineNum + ". Skipped Point search");
+                        logger.traceError("Exception while processing line " + lineNum +
+                                ". Skipped Point Search. message: "+error.getMessage());
                     }
                     break;
                 }
@@ -181,8 +185,10 @@ public class Q1 {
 					logger.traceError("Invalid query type " + opType + " at line " + lineNum + ". Skipped .. ");
 					break;
 				}
-                if (lineNum == 1200)
-                    break;
+                if (lineNum == 62)
+                {
+                    int gggg=0;
+                }
 			}
 			input.close();
             tree.save();

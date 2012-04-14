@@ -1,7 +1,6 @@
 package rstar;
 
 import rstar.dto.NodeDTO;
-import rstar.interfaces.IRStarNode;
 import rstar.spatial.HyperRectangle;
 import rstar.spatial.SpatialPoint;
 import util.Constants;

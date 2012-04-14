@@ -79,9 +79,9 @@ public class SpatialPoint implements IDtoConvertible {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("[ ");
+        StringBuilder str = new StringBuilder("[");
         for (double cord : _cords) {
-            str.append(cord + ", ");
+            str.append(cord + ",");
         }
         str.append("]");
         return str.toString();

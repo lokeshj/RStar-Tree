@@ -1,5 +1,7 @@
 package util;
 
+import rstar.spatial.SpatialPoint;
+
 import java.util.List;
 
 /**
@@ -20,5 +22,13 @@ public class Utils {
 
     public static synchronized long getRandomId() {
         return idSeed++;
+    }
+
+    public static String SpatialPointListToString(List<SpatialPoint> list) {
+        String output = "";
+        for (SpatialPoint point : list) {
+            output += point.toString() +",\n";
+        }
+        return output;
     }
 }

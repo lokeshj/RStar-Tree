@@ -1,6 +1,7 @@
 import rstar.RStarTree;
 import rstar.spatial.SpatialPoint;
 import util.Trace;
+import util.Utils;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -101,7 +102,7 @@ public class Q1 {
                         break;
                     }
                     catch (AssertionError error){
-                        logger.traceError("Exception while processing line " + lineNum +
+                        logger.traceError("Error while processing line " + lineNum +
                                 ".Skipped Insertion. message: "+ error.getMessage());
                         break;
                     }
@@ -126,7 +127,7 @@ public class Q1 {
                                 ". Skipped Point Search. message: "+e.getMessage());
                     }
                     catch (AssertionError error){
-                        logger.traceError("Exception while processing line " + lineNum +
+                        logger.traceError("Error while processing line " + lineNum +
                                 ". Skipped Point Search. message: "+error.getMessage());
                     }
                     break;
@@ -141,17 +142,21 @@ public class Q1 {
 
                         point = extractPoint(lineSplit, 1);
                         range = Double.parseDouble(lineSplit[this.dimension + 1]);
+                        SpatialPoint center = new SpatialPoint(point);
 
                         start = System.currentTimeMillis();
-                        tree.rangeSearch(new SpatialPoint(point), range);
+                        List<SpatialPoint> result = tree.rangeSearch(center, range);
                         end = System.currentTimeMillis();
 
+                        logger.trace("Range Search(" + range + ", " + center + "): " + Utils.SpatialPointListToString(result));
                         this.updateTimeTaken(opType, (end - start));
                     } catch (Exception e) {
-                        logger.traceError("Error while parsing line " + lineNum + ". Skipped range search");
+                        logger.traceError("Exception while processing line " + lineNum +
+                                ". Skipped range search. message: "+e.getMessage());
                     }
                     catch (AssertionError error){
-                        logger.traceError("Error while parsing line " + lineNum + ". Skipped range search");
+                        logger.traceError("Error while processing line " + lineNum +
+                                ". Skipped range search. message: "+error.getMessage());
                     }
                     break;
                 }
@@ -165,18 +170,21 @@ public class Q1 {
 
                         point = extractPoint(lineSplit, 1);
                         k = Float.parseFloat(lineSplit[this.dimension + 1]);
+                        SpatialPoint center = new SpatialPoint(point);
 
                         start = System.currentTimeMillis();
-                        tree.knnSearch(new SpatialPoint(point), (int)k);
+                        List<SpatialPoint> result = tree.knnSearch(center, (int)k);
                         end = System.currentTimeMillis();
 
+                        logger.trace("Knn Search(" + k + ", " + center + "): " + Utils.SpatialPointListToString(result));
                         this.updateTimeTaken(opType, (end - start));
-
                     } catch (Exception e) {
-						logger.traceError("Error while parsing line " + lineNum + ". Skipped knn search");
-					}
+                        logger.traceError("Exception while processing line " + lineNum +
+                                ". Skipped knn search. message: "+e.getMessage());
+                    }
                     catch (AssertionError error){
-                        logger.traceError("Error while parsing line " + lineNum + ". Skipped knn search");
+                        logger.traceError("Error while processing line " + lineNum +
+                                ". Skipped knn search. message: "+error.getMessage());
                     }
 					break;
 				}
@@ -240,26 +248,26 @@ public class Q1 {
 
 		String result = "\n"+this.getClass().getSimpleName()+" --RESULTS--";
 
-		String temp = "\n\nInsertion operations:(in milliseconds) "+ getResults(insertRunTime);
+		String temp = "\n\nInsertion operations:(in milliseconds) "+ generateRuntimeReport(insertRunTime);
         logger.trace(temp);
         result += temp;
-		temp = "\n\nSearch operations:(in milliseconds) "+ getResults(searchRunTime);
+		temp = "\n\nSearch operations:(in milliseconds) "+ generateRuntimeReport(searchRunTime);
         logger.trace(temp);
         result += temp;
-		temp = "\n\nRange search operations: (in milliseconds) " +getResults(rangeRuntime);
+		temp = "\n\nRange search operations: (in milliseconds) " + generateRuntimeReport(rangeRuntime);
         logger.trace(temp);
         result += temp;
-		temp = "\n\nKNN search operations: (in milliseconds) " +getResults(knnRuntime);
+		temp = "\n\nKNN search operations: (in milliseconds) " + generateRuntimeReport(knnRuntime);
         logger.trace(temp);
         result += temp;
-		temp = "\n\nCombined operations:(in milliseconds) "+getResults(combined);
+		temp = "\n\nCombined operations:(in milliseconds) "+ generateRuntimeReport(combined);
         logger.trace( temp);
         result += temp;
 
 		writeResultToFile(result);
 	}
 	
-	protected String getResults(List<Long> runtime) {
+	protected String generateRuntimeReport(List<Long> runtime) {
 		StringBuilder result = new StringBuilder();
         int size = runtime.size();
 
@@ -308,7 +316,6 @@ public class Q1 {
 		} 
 		catch (IOException e) {
 			logger.traceError("IOException while writing results to " + resultFile);
-//			e.printStackTrace();
 		}
 	}
 

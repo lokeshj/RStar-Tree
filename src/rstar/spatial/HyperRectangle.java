@@ -5,7 +5,6 @@ import rstar.dto.MbrDTO;
 import rstar.interfaces.IDtoConvertible;
 import util.Constants;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -112,7 +111,7 @@ public class HyperRectangle implements IDtoConvertible {
             }
         } else if (newPoints.get(0) instanceof RStarNode) {
             for (T node : newPoints) {
-            update(((RStarNode)node).getMBR());
+            update(((RStarNode) node).getMBR());
         }
         }
     }

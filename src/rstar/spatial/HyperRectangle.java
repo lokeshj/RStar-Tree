@@ -133,10 +133,10 @@ public class HyperRectangle implements IDtoConvertible {
         float[][] newPoints = addedRegion.getPoints();
         assert newPoints.length == _dimension;
         for (int j = 0; j < _dimension; j++) {
-            if (points[j][MAX_CORD] < newPoints[j][MAX_CORD]) {
+            if (points[j][MAX_CORD] == 0 || points[j][MAX_CORD] < newPoints[j][MAX_CORD]) {
                 points[j][MAX_CORD] = newPoints[j][MAX_CORD];
             }
-            if (points[j][MIN_CORD] > newPoints[j][MIN_CORD]) {
+            if (points[j][MIN_CORD] == 0 || points[j][MIN_CORD] > newPoints[j][MIN_CORD]) {
                 points[j][MIN_CORD] = newPoints[j][MIN_CORD];
             }
         }
@@ -154,12 +154,12 @@ public class HyperRectangle implements IDtoConvertible {
 
         boolean intersectExists = true;
         for (int i = 0; i < _dimension; i++) {
-            if ((points[i][MAX_CORD] <= newPoints[i][MIN_CORD]) || (points[i][MIN_CORD] >= newPoints[i][MAX_CORD])) {
+            if ((points[i][MAX_CORD] < newPoints[i][MIN_CORD]) || (points[i][MIN_CORD] > newPoints[i][MAX_CORD])) {
                 intersectExists = false;
                 break;
             }
             interPoints[i][MAX_CORD] = Math.min(newPoints[i][MAX_CORD], points[i][MAX_CORD]);
-            interPoints[i][MIN_CORD] = Math.max(newPoints[i][MIN_CORD], points[i][MAX_CORD]);
+            interPoints[i][MIN_CORD] = Math.max(newPoints[i][MIN_CORD], points[i][MIN_CORD]);
         }
 
         if (!intersectExists) {

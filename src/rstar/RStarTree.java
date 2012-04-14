@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
+import static java.util.Arrays.sort;
+
 /**
  * User: Lokesh
  * Date: 3/4/12
@@ -69,11 +71,10 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
     private void setCapacities(){
         Constants.DIMENSION = dimension;
-        //TODO add cost for mbr
-        Constants.MAX_CHILDREN = Constants.PAGESIZE/8;          // M = (pagesize - mbr_size)/ (size of Long = 8)
-        Constants.MIN_CHILDREN = Constants.MAX_CHILDREN/3;      // m = M/3
-//        Constants.MAX_CHILDREN = 5;
-//        Constants.MIN_CHILDREN = 2;
+//        Constants.MAX_CHILDREN = Constants.PAGESIZE/8;          // M = (pagesize - mbr_size)/ (size of Long = 8)
+//        Constants.MIN_CHILDREN = Constants.MAX_CHILDREN/3;      // m = M/3
+        Constants.MAX_CHILDREN = 10;
+        Constants.MIN_CHILDREN = 4;
     }
 
     /* QUERY FUNCTIONS */
@@ -89,31 +90,57 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         RStarLeaf target = chooseSubtree(point);
 
         if (target.isNotFull()) {
-            int status = target.insert(point);
-            if(status == 1) {
-                storage.saveNode(target);
-            } else {
-                System.out.println("failed to insert point with oid=" + point.getOid());
+            target.insert(point);
+            storage.saveNode(target);
+            //adjust root reference
+            if (target.nodeId == rootPointer) {
+                root = target;
             }
-            return status;
+            adjustParentOf(target);
+            return 1;
         } else {
-            return treatLeafOverflow(target, point);
+            int status = treatLeafOverflow(target, point);
+            return status;
         }
     }
 
-    private int insert(Long nodePointer, RStarNode newChild) {
-        storage.saveNode(newChild);
-        RStarInternal node = (RStarInternal) loadNode(nodePointer);
-        if (node.isNotFull()) {
-            int status = node.insert(newChild);
-            if (status == 1) {
-                storage.saveNode(node);
-            } else {
-                System.out.println("failed to propagate split");
+    private void adjustParentOf(RStarNode target) {
+        if (target.getNodeId() != rootPointer) {
+            RStarNode parent = loadNode(target.getParentId());
+            HyperRectangle mbr = parent.getMBR();
+            mbr.update(target.getMBR());
+            parent.mbr = mbr;
+            storage.saveNode(parent);
+            if (parent.getNodeId() == rootPointer) {
+                root = parent;
             }
-            return status;
+            adjustParentOf(parent);
+        }
+    }
+
+    /**
+     * inserts a RStar node in the node pointed by nodePointer
+     * @param nodePointer pointer to node in which the given node
+     *                    is to be inserted
+     * @param nodeToInsert the node to be inserted
+     * @return 1 of successful, else -1
+     */
+    private int insert(Long nodePointer, RStarNode nodeToInsert) {
+        storage.saveNode(nodeToInsert);
+        RStarInternal target = (RStarInternal) loadNode(nodePointer);
+
+        if (target.isNotFull()) {
+            target.insert(nodeToInsert);
+
+            if (target.nodeId == rootPointer) {
+                root = target;
+            }
+
+            storage.saveNode(target);
+            adjustParentOf(target);
+            return 1;
         } else {
-            return treatInternalOverflow(node, newChild);
+            return treatInternalOverflow(target, nodeToInsert);
         }
     }
 
@@ -288,7 +315,6 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      * not have any children
      */
     private void splitLeaf(RStarLeaf splittingLeaf, SpatialPoint newPoint) throws AssertionError{
-        //load all children of target
         ArrayList<Long> childPointers = splittingLeaf.childPointers;
         if (childPointers.size() <= 0) {
             throw new AssertionError();
@@ -307,11 +333,14 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
         Object[] sorting = children.toArray();
         final SpatialComparator comp = new SpatialComparator(splitAxis, bestSortOrder);
-        Arrays.sort(sorting, comp);
+        sort(sorting, comp);
 
         splittingLeaf.loadedChildren = new ArrayList<SpatialPoint>();
         splittingLeaf.childPointers = new ArrayList<Long>();
         RStarLeaf newChild = new RStarLeaf(dimension);
+
+        HyperRectangle newMbr1 = new HyperRectangle(dimension);     //adjusted mbr for splittingLeaf
+        HyperRectangle newMbr2 = new HyperRectangle(dimension);     //adjusted mbr for newChild
 
         for (int i = 0; i < sorting.length; i++) {
             SpatialPoint spatialPoint = (SpatialPoint) sorting[i];
@@ -321,17 +350,23 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
                 } else {
                     splittingLeaf.childPointers.add(childPointers.get(children.indexOf(spatialPoint)));
                 }
+                newMbr1.update(spatialPoint);
             } else {
                 if (spatialPoint == newPoint) {
                     newChild.loadedChildren.add(spatialPoint);
                 } else {
                     newChild.childPointers.add(childPointers.get(children.indexOf(spatialPoint)));
                 }
+                newMbr2.update(spatialPoint);
             }
         }
+        splittingLeaf.mbr = newMbr1;
+        newChild.mbr = newMbr2;
+
         storage.saveNode(splittingLeaf);
         if (splittingLeaf.getNodeId() == rootPointer) {
             //we just split root
+            root = splittingLeaf;
             splitRoot(newChild);
         }else {
             newChild.setParentId(splittingLeaf.getParentId());
@@ -339,7 +374,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         }
     }
 
-    private void splitInternalNode(RStarInternal splittingNode, RStarNode newChild) {
+    private void splitInternalNode(RStarInternal splittingNode, RStarNode node) {
         //load all children of target
         ArrayList<Long> childPointers = splittingNode.childPointers;
         if (childPointers.size() <= 0) {
@@ -352,33 +387,45 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
             children.add(loadNode(childNodeId));
         }
 
-        children.add(newChild);
+        children.add(node);
         int splitAxis = chooseInternalSplitAxis(children);
         int splitPoint = chooseInternalSplitpoint(children, splitAxis);
 
         Object[] sorting = children.toArray();
         final SpatialComparator comp = new SpatialComparator(splitAxis, bestSortOrder);
-        Arrays.sort(sorting, comp);
+        sort(sorting, comp);
 
         splittingNode.childPointers = new ArrayList<Long>();
-        RStarInternal newNode = new RStarInternal(dimension);
+        RStarInternal createdNode = new RStarInternal(dimension);
+
+        HyperRectangle newMbr1 = new HyperRectangle(dimension);
+        HyperRectangle newMbr2 = new HyperRectangle(dimension);
 
         for (int i = 0; i < sorting.length; i++) {
-            RStarNode node = (RStarNode) sorting[i];
+            RStarNode childNode = (RStarNode) sorting[i];
             if (i < splitPoint) {
-                splittingNode.childPointers.add(node.getNodeId());
+                splittingNode.childPointers.add(childNode.getNodeId());
+                childNode.setParentId(splittingNode.getNodeId());
+                newMbr1.update(childNode.getMBR());
             } else {
-                newNode.childPointers.add(node.getNodeId());
+                createdNode.childPointers.add(childNode.getNodeId());
+                childNode.setParentId(createdNode.getNodeId());
+                newMbr2.update(childNode.getMBR());
             }
+            storage.saveNode(childNode);            //record the updates to disk
         }
+
+        splittingNode.mbr = newMbr1;
+        createdNode.mbr = newMbr2;
 
         storage.saveNode(splittingNode);
         if (splittingNode.getNodeId() == rootPointer) {
             //we just split root
-            splitRoot(newChild);
+            root = splittingNode;
+            splitRoot(createdNode);
         } else {
-            newChild.setParentId(splittingNode.getParentId());
-            insert(splittingNode.getParentId(), newChild);
+            createdNode.setParentId(splittingNode.getParentId());
+            insert(splittingNode.getParentId(), createdNode);
         }
     }
 
@@ -588,7 +635,6 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      */
     @Override
     public float pointSearch(SpatialPoint point) {
-        System.out.println("searching point :" + point);
         _pointSearchResult = -1;
         loadRoot();
         _pointSearch(root, point);
@@ -604,22 +650,24 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
                 float[] searchPoints = point.getCords();
 
                 //lazy loading of child points
-                for (Long pointer : root.childPointers) {
+                for (Long pointer : start.childPointers) {
                     PointDTO dto = storage.loadPoint(pointer);
 
                     float[] candidates = dto.coords;
                     boolean found = true;
                     for (int i = 0; i < candidates.length; i++) {
-                        if (candidates[i] != searchPoints[i])
+                        if (candidates[i] != searchPoints[i]){
                             found = false;
-                        break;
+                            break;
+                        }
                     }
                     if (found) {
                         _pointSearchResult = dto.oid;
+                        break;
                     }
                 }
             } else {
-                for (Long pointer : root.childPointers) {
+                for (Long pointer : start.childPointers) {
                     if(_pointSearchResult != -1)         // point found
                         break;
 
@@ -628,7 +676,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
                         _pointSearch(childNode, point);
 
                     } catch (FileNotFoundException e) {
-                        System.err.println("Exception while loading node from disk");
+                        System.err.println("Exception while loading node from disk. message = "+e.getMessage());
                     }
                 }
             }
@@ -664,7 +712,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         HyperRectangle intersection = start.getMBR().getIntersection(searchRegion);
         if (intersection != null) {
             if (start.isLeaf()) {
-                for (Long pointer : root.childPointers) {
+                for (Long pointer : start.childPointers) {
                     PointDTO dto = storage.loadPoint(pointer);
                     SpatialPoint spoint = new SpatialPoint(dto);
                     HyperRectangle pointMbr = new HyperRectangle(dto.coords);
@@ -674,7 +722,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
                 }
             }
             else {
-                for (Long pointer : root.childPointers) {
+                for (Long pointer : start.childPointers) {
                     try {
                         RStarNode childNode = storage.loadNode(pointer);    //recurse down
                         _rangeSearch(childNode, searchRegion);
@@ -762,7 +810,12 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         //check for valid nodeId
         if (nodeId != -1) {
             try {
-                return storage.loadNode(nodeId);
+                if (nodeId == rootPointer) {
+                    loadRoot();
+                    return root;
+                } else {
+                    return storage.loadNode(nodeId);
+                }
             } catch (FileNotFoundException e) {
                 System.err.println("Error while loading R* Tree node from file " + storage.constructFilename(nodeId));
             }

@@ -6,16 +6,14 @@ import util.Constants;
 import java.util.Comparator;
 
 /**
- * User: Lokesh
- * Date: 13/4/12
- * Time: 9:34 PM
+ * Comparator for comparing two mbr's in a particular
+ * dimension only either the high value or the lower value
  */
 public class SpatialComparator implements Comparator {
     private int dimension;
     private int order;
 
     /**
-     * construct a new comparator for SpatialPoints
      * @param dimension the dimension along which the points
      *                  are to be sorted
      * @param cordToSort the value(higher or lower) used for sorting

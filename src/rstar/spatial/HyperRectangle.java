@@ -7,11 +7,6 @@ import util.Constants;
 
 import java.util.List;
 
-/**
- * User: Lokesh
- * Date: 3/4/12
- * Time: 1:52 AM
- */
 public class HyperRectangle implements IDtoConvertible {
     private int _dimension;
     /**
@@ -81,8 +76,8 @@ public class HyperRectangle implements IDtoConvertible {
     }
 
     private void update(SpatialPoint[] newPoints) {
-        for (int j = 0; j < newPoints.length; j++) {
-            float[] cord = newPoints[j].getCords();
+        for (SpatialPoint newPoint : newPoints) {
+            float[] cord = newPoint.getCords();
             assert cord.length == _dimension;
             for (int i = 0; i < cord.length; i++) {
                 if (points[i][MAX_CORD] == 0 || points[i][MAX_CORD] < cord[i]) {
@@ -97,8 +92,8 @@ public class HyperRectangle implements IDtoConvertible {
 
     private <T> void update(List<T> newPoints) {
         if (newPoints.get(0) instanceof SpatialPoint) {
-            for (int j = 0; j < newPoints.size(); j++) {
-                float[] cord = ((SpatialPoint)newPoints.get(j)).getCords();
+            for (T newPoint : newPoints) {
+                float[] cord = ((SpatialPoint) newPoint).getCords();
                 assert cord.length == _dimension;
                 for (int i = 0; i < cord.length; i++) {
                     if (points[i][MAX_CORD] == 0 || points[i][MAX_CORD] < cord[i]) {
@@ -143,7 +138,8 @@ public class HyperRectangle implements IDtoConvertible {
 
     /**
      * finds the intersecting region of this MBR with otherMBR
-     * @param otherMBR
+     * @param otherMBR the mbr with which this mbr's intersection
+     *                 is to be calculated
      * @return the intersecting region, null if not intersecting
      */
     public HyperRectangle getIntersection(HyperRectangle otherMBR) {
@@ -169,6 +165,11 @@ public class HyperRectangle implements IDtoConvertible {
         return intersect;
     }
 
+    /**
+     * finds the increment in volume of the newMbr is
+     * added
+     * @return 0 if no incement
+     */
     public double deltaV_onInclusion(HyperRectangle newmbr) {
         HyperRectangle tempMbr = new HyperRectangle(_dimension);
         tempMbr.setPoints(points);
@@ -184,8 +185,8 @@ public class HyperRectangle implements IDtoConvertible {
      */
     public double volume() {
         double vol = 1;
-        for (int i = 0; i < points.length; i++) {
-            vol *= points[i][MAX_CORD] - points[i][MIN_CORD];
+        for (float[] point : points) {
+            vol *= point[MAX_CORD] - point[MIN_CORD];
         }
         return vol;
     }
@@ -197,8 +198,8 @@ public class HyperRectangle implements IDtoConvertible {
      */
     public double margin() {
         double margin = 0;
-        for (int i = 0; i < points.length; i++) {
-            margin += points[i][MAX_CORD] - points[i][MIN_CORD];
+        for (float[] point : points) {
+            margin += point[MAX_CORD] - point[MIN_CORD];
         }
         return margin;
     }

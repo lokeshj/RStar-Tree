@@ -7,11 +7,6 @@ import util.Constants;
 
 import java.util.ArrayList;
 
-/**
- * User: Lokesh
- * Date: 3/4/12
- * Time: 2:22 AM
- */
 public class RStarLeaf extends RStarNode {
     public ArrayList<SpatialPoint> loadedChildren;
 

@@ -7,11 +7,6 @@ import rstar.dto.TreeDTO;
 import java.io.File;
 import java.io.FileNotFoundException;
 
-/**
- * User: Lokesh
- * Date: 4/4/12
- * Time: 9:07 PM
- */
 public interface IDiskQuery {
     void saveNode(RStarNode node);
 

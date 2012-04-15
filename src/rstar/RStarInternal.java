@@ -7,13 +7,8 @@ import util.Constants;
 
 import java.util.ArrayList;
 
-/**
- * User: Lokesh
- * Date: 3/4/12
- * Time: 2:55 AM
- */
 public class RStarInternal extends RStarNode {
-    private transient ArrayList<RStarNode> children;
+    private ArrayList<RStarNode> children;
 
     public RStarInternal(int dimension) {
         createId();

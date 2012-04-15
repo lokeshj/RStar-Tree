@@ -11,9 +11,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
 /**
- * User: Lokesh
- * Date: 3/4/12
- * Time: 1:33 AM
+ * provides all disk related functionality like
+ * loading and saving of nodes, points and tree.
  */
 public class StorageManager implements IDiskQuery {
     RandomAccessFile dataStore;
@@ -198,8 +197,7 @@ public class StorageManager implements IDiskQuery {
             FileInputStream fis = new FileInputStream(saveFile);
             ObjectInputStream ois = new ObjectInputStream(fis);
 
-            TreeDTO dto = (TreeDTO) ois.readObject();
-            return dto;
+            return (TreeDTO) ois.readObject();
 
         } catch (IOException e) {
             System.err.println("Exception while loading tree from " + saveFile);
@@ -210,8 +208,7 @@ public class StorageManager implements IDiskQuery {
     }
 
     public String constructFilename(long nodeId) {
-        String file = Constants.TREE_DATA_DIRECTORY + "/" + Constants.NODE_FILE_PREFIX + nodeId + Constants.NODE_FILE_SUFFIX;
-        return file;
+        return Constants.TREE_DATA_DIRECTORY + "/" + Constants.NODE_FILE_PREFIX + nodeId + Constants.NODE_FILE_SUFFIX;
     }
 
     public long nodeIdFromFilename(String filename) {

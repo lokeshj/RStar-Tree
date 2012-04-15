@@ -3,11 +3,6 @@ package rstar.spatial;
 import rstar.dto.PointDTO;
 import rstar.interfaces.IDtoConvertible;
 
-/**
- * User: Lokesh
- * Date: 3/4/12
- * Time: 2:05 AM
- */
 public class SpatialPoint implements IDtoConvertible {
     private int _dimension;
     private float[] _cords;
@@ -17,7 +12,7 @@ public class SpatialPoint implements IDtoConvertible {
     }
 
     public SpatialPoint(int dimension) {
-        this._dimension = 0;
+        this._dimension = dimension;
         this._oid = -1;
     }
 

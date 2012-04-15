@@ -56,7 +56,8 @@ public class SpatialPoint implements IDtoConvertible {
 
     /**
      * calculate distance of this point with <pre>otherPoint</pre>
-     * @param otherPoint
+     * @param otherPoint the point from which this point's
+     *                   distance is to be calculated
      * @return distance from <pre>otherPoint</pre>
      */
     public float distance(SpatialPoint otherPoint) {
@@ -76,7 +77,7 @@ public class SpatialPoint implements IDtoConvertible {
     public String toString() {
         StringBuilder str = new StringBuilder("[");
         for (double cord : _cords) {
-            str.append(cord + ",");
+            str.append(cord).append(",");
         }
         str.append("]");
         return str.toString();

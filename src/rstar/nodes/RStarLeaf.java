@@ -1,4 +1,4 @@
-package rstar;
+package rstar.nodes;
 
 import rstar.dto.NodeDTO;
 import rstar.spatial.HyperRectangle;
@@ -50,6 +50,11 @@ public class RStarLeaf extends RStarNode {
     @Override
     public HyperRectangle getMBR() {
         return mbr;
+    }
+
+    @Override
+    public void setMbr(HyperRectangle mbr) {
+        this.mbr = mbr;
     }
 
     @Override

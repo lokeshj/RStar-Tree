@@ -14,8 +14,8 @@ public class Q1 {
 
 	private RStarTree tree;
     private int dimension;
-	protected String inputFile;
-	protected String resultFile;
+	private String inputFile;
+	private String resultFile;
 	private List<Long> insertRunTime;
 	private List<Long> searchRunTime;
 	private List<Long> rangeRuntime;
@@ -64,13 +64,12 @@ public class Q1 {
         float opType, oid, k;
 		double range;
         float[] point;
-        point = new float[this.dimension];
         long start, end;
         int lineNum = 0;
 
         try {
             BufferedReader input =  new BufferedReader(new FileReader(this.inputFile));
-            String line=null;
+            String line;
             String[] lineSplit;
 
 			while ((line = input.readLine()) != null) {
@@ -193,10 +192,6 @@ public class Q1 {
 					logger.traceError("Invalid query type " + opType + " at line " + lineNum + ". Skipped .. ");
 					break;
 				}
-                if (lineNum == 62)
-                {
-                    int gggg=0;
-                }
 			}
 			input.close();
             tree.save();
@@ -283,7 +278,7 @@ public class Q1 {
                 }
                 double avg = sum / (double) size;
 
-                result.append("\nTotal ops = " + size);
+                result.append("\nTotal ops = ").append(size);
                 result.append("\nAvg time: ").append(avg);
                 result.append("\n5th percentile: ").append(percent5th);
                 result.append("\n95th percentile: ").append(percent95th);

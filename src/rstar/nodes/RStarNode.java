@@ -1,4 +1,4 @@
-package rstar;
+package rstar.nodes;
 
 import rstar.interfaces.IDtoConvertible;
 import rstar.interfaces.IRStarNode;

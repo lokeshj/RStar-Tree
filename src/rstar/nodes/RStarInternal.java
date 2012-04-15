@@ -1,4 +1,4 @@
-package rstar;
+package rstar.nodes;
 
 import rstar.dto.NodeDTO;
 import rstar.spatial.HyperRectangle;
@@ -8,7 +8,7 @@ import util.Constants;
 import java.util.ArrayList;
 
 public class RStarInternal extends RStarNode {
-    private ArrayList<RStarNode> children;
+//    private ArrayList<RStarNode> children;
 
     public RStarInternal(int dimension) {
         createId();
@@ -21,7 +21,7 @@ public class RStarInternal extends RStarNode {
         this.nodeId = nodeId;
         this.setParentId(dto.parentId);
         this.childPointers = dto.children;
-        children = new ArrayList<RStarNode>(Constants.MAX_CHILDREN);
+//        children = new ArrayList<RStarNode>(Constants.MAX_CHILDREN);
         this.mbr = new HyperRectangle(dto.mbr);
     }
 
@@ -49,6 +49,11 @@ public class RStarInternal extends RStarNode {
     @Override
     public HyperRectangle getMBR() {
         return mbr;
+    }
+
+    @Override
+    public void setMbr(HyperRectangle mbr) {
+        this.mbr = mbr;
     }
 
     public double deltaV_onInclusion(SpatialPoint newPoint) {

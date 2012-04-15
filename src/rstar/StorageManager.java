@@ -4,6 +4,9 @@ import rstar.dto.NodeDTO;
 import rstar.dto.PointDTO;
 import rstar.dto.TreeDTO;
 import rstar.interfaces.IDiskQuery;
+import rstar.nodes.RStarInternal;
+import rstar.nodes.RStarLeaf;
+import rstar.nodes.RStarNode;
 import util.Constants;
 
 import java.io.*;
@@ -192,7 +195,7 @@ public class StorageManager implements IDiskQuery {
      * @throws FileNotFoundException
      */
     @Override
-    public TreeDTO loadTree(File saveFile) throws FileNotFoundException {
+    public TreeDTO loadTree(File saveFile) {
         try {
             FileInputStream fis = new FileInputStream(saveFile);
             ObjectInputStream ois = new ObjectInputStream(fis);

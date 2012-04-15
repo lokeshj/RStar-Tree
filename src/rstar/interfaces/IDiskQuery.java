@@ -1,6 +1,6 @@
 package rstar.interfaces;
 
-import rstar.RStarNode;
+import rstar.nodes.RStarNode;
 import rstar.dto.PointDTO;
 import rstar.dto.TreeDTO;
 
@@ -18,5 +18,5 @@ public interface IDiskQuery {
 
     int saveTree(TreeDTO tree, File saveFile);
 
-    TreeDTO loadTree(File saveFile) throws FileNotFoundException;
+    TreeDTO loadTree(File saveFile);
 }

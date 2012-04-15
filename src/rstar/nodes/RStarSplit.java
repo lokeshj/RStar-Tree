@@ -1,5 +1,6 @@
-package rstar;
+package rstar.nodes;
 
+import rstar.StorageManager;
 import rstar.dto.PointDTO;
 import rstar.spatial.HyperRectangle;
 import rstar.spatial.SpatialComparator;
@@ -393,8 +394,8 @@ public class RStarSplit {
                 newMbr2.update(spatialPoint);
             }
         }
-        splittingLeaf.mbr = newMbr1;
-        newChild.mbr = newMbr2;
+        splittingLeaf.setMbr(newMbr1);
+        newChild.setMbr(newMbr2);
 
         disk.saveNode(splittingLeaf);
         return newChild;
@@ -441,8 +442,8 @@ public class RStarSplit {
             disk.saveNode(childNode);            //record the updates to disk
         }
 
-        splittingNode.mbr = newMbr1;
-        createdNode.mbr = newMbr2;
+        splittingNode.setMbr(newMbr1);
+        createdNode.setMbr(newMbr2);
 
         disk.saveNode(splittingNode);
         return createdNode;

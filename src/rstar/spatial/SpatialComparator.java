@@ -1,6 +1,6 @@
 package rstar.spatial;
 
-import rstar.RStarNode;
+import rstar.nodes.RStarNode;
 import util.Constants;
 
 import java.util.Comparator;

@@ -4,6 +4,10 @@ import rstar.dto.PointDTO;
 import rstar.dto.TreeDTO;
 import rstar.interfaces.IDtoConvertible;
 import rstar.interfaces.ISpatialQuery;
+import rstar.nodes.RStarInternal;
+import rstar.nodes.RStarLeaf;
+import rstar.nodes.RStarNode;
+import rstar.nodes.RStarSplit;
 import rstar.spatial.HyperRectangle;
 import rstar.spatial.SpatialPoint;
 import util.Constants;
@@ -18,7 +22,6 @@ import java.util.List;
 public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
     private int dimension;
-    private int pagesize;
     private File saveFile;
     private StorageManager storage;
     private RStarNode root;
@@ -32,7 +35,6 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
 
     public RStarTree(int dimension) {
         this.dimension = dimension;
-        this.pagesize = Constants.DIMENSION;
         this.saveFile = new File(Constants.TREE_FILE);
         this.storage = new StorageManager();
         this.splitManager = new RStarSplit(dimension, storage);
@@ -65,14 +67,13 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
             target.insert(point);
             storage.saveNode(target);
             //adjust root reference
-            if (target.nodeId == rootPointer) {
+            if (target.getNodeId() == rootPointer) {
                 root = target;
             }
             adjustParentOf(target);
             return 1;
         } else {
-            int status = treatLeafOverflow(target, point);
-            return status;
+            return treatLeafOverflow(target, point);
         }
     }
 
@@ -90,7 +91,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
         if (target.isNotFull()) {
             target.insert(nodeToInsert);
 
-            if (target.nodeId == rootPointer) {
+            if (target.getNodeId() == rootPointer) {
                 root = target;
             }
 
@@ -299,7 +300,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
      * @param node the node to be inserted
      */
     private void splitInternalNode(RStarInternal splittingNode, RStarNode node) {
-        RStarNode createdNode = null;
+        RStarNode createdNode;
         try {
             createdNode = splitManager.splitInternalNode(splittingNode, node);
             if (splittingNode.getNodeId() == rootPointer) {
@@ -335,8 +336,9 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
     /**
      * finds the most appropriate leaf node to
      * insert the newPoint into
-     * @param newPoint
-     * @return RStarLeaf
+     * @param newPoint the point to be inserted
+     * @return RStarLeaf the most appropriate leaf to insert
+     * newPoint
      */
     private RStarLeaf chooseLeaf(SpatialPoint newPoint) {
         loadRoot();
@@ -354,7 +356,7 @@ public class RStarTree implements ISpatialQuery, IDtoConvertible {
             RStarNode parent = loadNode(target.getParentId());
             HyperRectangle mbr = parent.getMBR();
             mbr.update(target.getMBR());
-            parent.mbr = mbr;
+            parent.setMbr(mbr);
             storage.saveNode(parent);
             if (parent.getNodeId() == rootPointer) {
                 root = parent;
